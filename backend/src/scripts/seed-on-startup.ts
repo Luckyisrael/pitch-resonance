@@ -2,12 +2,16 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 import { convertHistoricalData } from '../historical/converter'
+import { computeFrameFromPixelBlob } from '../physics/engine'
 import {
   upsertFixtureRaw,
   getFixtureRaw,
   insertFrames,
   getFrameCount,
+  getFrames,
   upsertMatch,
+  upsertTelemetryFrames,
+  getTelemetryFrameCount,
   getAllFixtureIds,
 } from '../db/client'
 
@@ -87,6 +91,34 @@ async function fetchFixture(fixture: { fid: string; home: string; away: string }
     startTime: new Date().toISOString(),
   })
   insertFrames(fixture.fid, result.frames)
+
+  // Pre-compute physics frames from pixelData
+  try {
+    const stride = 10
+    const rows = getFrames(fixture.fid, { stride })
+    if (rows.length > 0) {
+      const telemetry = rows.map(r => {
+        const p = computeFrameFromPixelBlob(Buffer.from(new Float32Array(r.pixelData).buffer), {
+          possession: r.possession, ballX: r.ballX, ballY: r.ballY,
+          homeScore: r.homeScore, awayScore: r.awayScore, phase: r.phase,
+          seq: r.seq, clockSec: r.clockSec, action: r.action, team: r.team,
+        })
+        return {
+          seq: p.seq, clockSec: p.clockSec, phase: p.phase,
+          homeScore: p.homeScore, awayScore: p.awayScore,
+          ballX: p.ballX, ballY: p.ballY,
+          territoryFactor: p.territoryFactor, quadrants: p.quadrants,
+          turfAmplitude: p.turfAmplitude, waveAngle: p.waveAngle,
+          waveFrequency: p.waveFrequency, rippleAge: p.rippleAge,
+          possession: p.possession, action: p.action, team: p.team,
+        }
+      })
+      upsertTelemetryFrames(fixture.fid, telemetry)
+      console.log(`  [PHYSICS] ${telemetry.length} frames pre-computed`)
+    }
+  } catch (err) {
+    console.log(`  [PHYSICS SKIP] ${err}`)
+  }
 
   console.log(`  [OK] ${result.homeTeamName} ${result.homeScore}-${result.awayScore} ${result.awayTeamName} (${result.totalFrames} frames)`)
   return true
