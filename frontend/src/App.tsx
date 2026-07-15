@@ -71,29 +71,112 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {state.onboardingStep === 0 && (
-          <motion.div key="step0" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="flex-grow max-w-xl mx-auto flex flex-col justify-center px-6 py-16"
+          <motion.div key="step0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex-grow flex flex-col justify-center px-6 py-16"
           >
-            <div className="bg-[#141415] border border-zinc-800 p-8 sm:p-10 rounded-3xl shadow-2xl space-y-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/5 rounded-full blur-3xl pointer-events-none" />
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-450/10 border border-amber-400/20 rounded-full">
-                  <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span className="text-[10px] font-mono tracking-widest font-black uppercase text-amber-300">Solana Hackathon Entry</span>
-                </div>
-                <h1 className="text-4xl font-black text-white tracking-tight leading-none uppercase">PITCH RESONANCE</h1>
-                <p className="text-sm text-zinc-400 leading-relaxed">
-                  Real-time football data from TxODDS rendered as a 3D undulating pitch. Tip SOL to deform the field and claim parimutuel rewards.
-                </p>
+            <div className="max-w-5xl mx-auto w-full relative">
+
+              {/* Grid lines — Swiss geometric accent */}
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 right-0 w-px h-full bg-zinc-800/40" />
+                <div className="absolute top-0 right-[33.33%] w-px h-full bg-zinc-800/20 hidden md:block" />
+                <div className="absolute top-0 right-[66.66%] w-px h-full bg-zinc-800/20 hidden md:block" />
+                <div className="absolute top-0 left-0 w-px h-full bg-zinc-800/40" />
+                <div className="absolute top-[45%] left-0 w-full h-px bg-zinc-800/20" />
+                <div className="absolute top-[75%] left-0 w-full h-px bg-zinc-800/20" />
               </div>
-              <div className="pt-4">
+
+              {/* Hero block — asymmetrical Swiss layout */}
+              <div className="relative z-10 grid md:grid-cols-12 gap-8 md:gap-12 mb-16">
+                <div className="md:col-span-7 space-y-6">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-mono tracking-[0.3em] font-black text-amber-400 uppercase block">
+                      TxODDS × Solana
+                    </span>
+                    <div className="w-12 h-[3px] bg-amber-400 mt-3" />
+                  </div>
+                  <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[0.9] tracking-tight uppercase">
+                    PITCH<br />
+                    <span className="text-zinc-500">RESONANCE</span>
+                  </h1>
+                  <p className="text-sm text-zinc-400 leading-relaxed max-w-md">
+                    A volumetric data portrait of live football. TxODSS feeds drive real-time 3D pitch deformation. Stake SOL on the outcome.
+                  </p>
+                </div>
+                <div className="md:col-span-5 md:pl-8 md:border-l border-zinc-800 space-y-5 self-center">
+                  <div className="space-y-3">
+                    {[
+                      { label: 'Data Source', value: 'TxODDS SSE' },
+                      { label: 'Settlement', value: 'Solana Devnet' },
+                      { label: 'Payout Model', value: 'Parimutuel' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex items-baseline justify-between gap-4">
+                        <span className="text-[10px] font-mono tracking-widest font-bold text-zinc-500 uppercase">{item.label}</span>
+                        <span className="text-xs font-mono font-black text-white">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="w-full h-px bg-zinc-800" />
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[10px] font-mono tracking-widest font-bold text-zinc-500 uppercase">Fixtures</span>
+                    <span className="text-lg font-black text-amber-400">22</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Three pillars — Swiss grid system */}
+              <div className="relative z-10 grid sm:grid-cols-3 gap-px bg-zinc-800 mb-12 border border-zinc-800">
+                {[
+                  {
+                    icon: <Activity className="w-5 h-5" />,
+                    title: 'Live Data',
+                    desc: 'Real-time football telemetry from TxODDS mapped to a 256×256 pitch grid.',
+                  },
+                  {
+                    icon: <div className="w-5 h-5 border-2 border-amber-400 rounded-full" />,
+                    title: '3D Physics',
+                    desc: 'Procedural wave deformation driven by ball position, possession, and heat maps.',
+                  },
+                  {
+                    icon: <Trophy className="w-5 h-5" />,
+                    title: 'Parimutuel',
+                    desc: 'Pool-based SOL staking with time-decay payout curves governed by smart contract.',
+                  },
+                ].map((col, i) => (
+                  <div key={i} className="bg-[#111112] p-6 sm:p-7 space-y-3">
+                    <div className="text-amber-400">{col.icon}</div>
+                    <h3 className="text-sm font-black text-white uppercase tracking-wider">{col.title}</h3>
+                    <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">{col.desc}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Bottom bar — CTA + stats */}
+              <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-0 border border-zinc-800">
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 divide-x divide-zinc-800 bg-[#141415]">
+                  {[
+                    ['Avg Frame', '~100 B'],
+                    ['Pitch Dim', '256×256'],
+                    ['Matches', '22'],
+                    ['Fee', '3.5%'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="px-4 py-3 text-center">
+                      <p className="text-[9px] font-mono tracking-widest font-bold text-zinc-500 uppercase">{k}</p>
+                      <p className="text-xs font-mono font-black text-white mt-0.5">{v}</p>
+                  </div>
+                  ))}
+                </div>
                 <button onClick={() => { dispatch({ type: 'SET_ONBOARDING', step: 1 }); }}
-                  className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-black font-black rounded-xl text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer"
+                  className="sm:w-auto px-8 py-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer shrink-0"
                 >
-                  <span>Learn How Winnings Work</span>
+                  <span>Enter</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
+
+              {/* Diagonal stripe — Swiss geometric accent */}
+              <div className="absolute -bottom-8 -right-8 w-32 h-32 border border-zinc-800/30 rotate-12 pointer-events-none" />
+
             </div>
           </motion.div>
         )}
