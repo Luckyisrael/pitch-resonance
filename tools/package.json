@@ -1,0 +1,19 @@
+{
+  "name": "pitch-resonance-activation",
+  "private": true,
+  "scripts": {
+    "activate": "tsx activate.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/spl-token": "^0.4.8",
+    "@solana/web3.js": "^1.95.0",
+    "axios": "^1.7.0",
+    "tweetnacl": "^1.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.0"
+  }
+}

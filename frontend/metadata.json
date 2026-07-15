@@ -1,0 +1,6 @@
+{
+  "name": "Live Football Match 3D visualizer",
+  "description": "An interactive 3D live match visualizer for Consumer & Fan Experiences, featuring real-time fan seating alliances, simulated sound synthesis, live tipping, deforming pitch shockwaves, and reward claims.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

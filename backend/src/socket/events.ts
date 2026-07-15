@@ -1,0 +1,16 @@
+export const EVENTS = {
+  PITCH_UPDATE: 'pitch:update',
+  PHYSICS_FRAME: 'pitch:physics_frame',
+  HYPE_UPDATE: 'hype:update',
+  MATCH_STATE: 'match:state',
+  GAME_FINALISED: 'game:finalised',
+  SHOCKWAVE: 'shockwave:trigger',
+  STATE_SYNC: 'state:sync',
+  JOIN_MATCH: 'join:match',
+  LEAVE_MATCH: 'leave:match',
+  REPLAY_SEEK: 'replay:seek',
+  REPLAY_PAUSE: 'replay:pause',
+  REPLAY_RESUME: 'replay:resume',
+  REPLAY_SPEED: 'replay:speed',
+  REPLAY_STATE: 'replay:state',
+} as const
