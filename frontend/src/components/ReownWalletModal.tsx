@@ -70,30 +70,50 @@ export default function ReownWalletModal({
     }
   };
 
-  const handleConnectExtension = async () => {
-    const provider = (window as any).solana;
+  const getProvider = (): any => (window as any).solana;
+
+  const bytesToHex = (bytes: Uint8Array) =>
+    Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const createSignMessageFn = (provider: any) => async (msg: string) => {
+    const encodedMessage = new TextEncoder().encode(msg);
+    const result = await provider.signMessage(encodedMessage, 'utf8');
+    const sig: Uint8Array = result.signature ?? result;
+    return bytesToHex(sig);
+  };
+
+  const handleConnectPhantom = async () => {
+    const provider = getProvider();
     if (!provider || !provider.isPhantom) {
       setErrorMsg("Phantom wallet extension not detected in this browser.");
       return;
     }
-
     setIsConnecting(true);
     setErrorMsg('');
     try {
       const resp = await provider.connect();
-      const pubKey = resp.publicKey.toString();
-
-      const signMessageFn = async (msg: string) => {
-        const encodedMessage = new TextEncoder().encode(msg);
-        const signedMessage = await provider.signMessage(encodedMessage, 'utf8');
-        return Array.from(signedMessage.signature as Uint8Array)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-      };
-
-      await authenticateWithAddress(pubKey, signMessageFn);
+      await authenticateWithAddress(resp.publicKey.toString(), createSignMessageFn(provider));
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to sign with browser extension.");
+      setErrorMsg(err.message || "Failed to sign with Phantom.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleConnectSolflare = async () => {
+    const provider = (window as any).solflare || getProvider();
+    if (!provider || provider.isPhantom) {
+      setErrorMsg("Solflare wallet extension not detected in this browser.");
+      return;
+    }
+    setIsConnecting(true);
+    setErrorMsg('');
+    try {
+      const resp = await provider.connect();
+      const pubKey = (resp.publicKey || resp).toString();
+      await authenticateWithAddress(pubKey, createSignMessageFn(provider));
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to sign with Solflare.");
     } finally {
       setIsConnecting(false);
     }
@@ -134,7 +154,7 @@ export default function ReownWalletModal({
           </p>
 
           <div className="space-y-px bg-zinc-800">
-            <button onClick={handleConnectExtension} disabled={isConnecting}
+            <button onClick={handleConnectPhantom} disabled={isConnecting}
               className="flex items-center justify-between p-3.5 bg-[#111112] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-50 group"
             >
               <div className="flex items-center gap-3">
@@ -149,7 +169,7 @@ export default function ReownWalletModal({
               <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider font-bold">Solana</span>
             </button>
 
-            <button onClick={handleConnectExtension} disabled={isConnecting}
+            <button onClick={handleConnectSolflare} disabled={isConnecting}
               className="flex items-center justify-between p-3.5 bg-[#111112] hover:bg-zinc-900 transition-all cursor-pointer disabled:opacity-50 group"
             >
               <div className="flex items-center gap-3">
