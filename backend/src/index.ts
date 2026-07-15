@@ -72,7 +72,7 @@ function triggerShockwave(matchId: string, data: ShockwaveQueue[0]) {
 // POST /api/hype/tip — receive a real Solana tx signature, verify on-chain, update pools
 app.post('/api/hype/tip', async (req, res) => {
   try {
-    const { matchId, team, signature, amount } = req.body as { matchId?: string; team?: string; signature?: string; amount?: number }
+    const { matchId, team, signature } = req.body as { matchId?: string; team?: string; signature?: string }
     if (!matchId || !team || (team !== 'home' && team !== 'away')) {
       res.status(400).json({ error: 'matchId and team (home|away) required' })
       return
@@ -82,81 +82,60 @@ app.post('/api/hype/tip', async (req, res) => {
     let finalAmountLamports: number
     let userWallet: string
 
-    if (signature) {
-      // --- On-chain verification ---
-      const conn = getConnection()
-      const parsed = await conn.getParsedTransaction(signature, {
-        commitment: 'confirmed',
-        maxSupportedTransactionVersion: 0,
-      })
-      if (!parsed || !parsed.meta || parsed.meta.err) {
-        res.status(400).json({ error: 'Transaction not found or failed' })
-        return
-      }
+    if (!signature) {
+      res.status(400).json({ error: 'Transaction signature required' })
+      return
+    }
 
-      // Verify the pool wallet received SOL
-      const poolStr = getPoolAddress().toBase58()
-      const accountKeys = parsed.transaction.message.accountKeys
-      let amountReceived = 0
-      let senderStr = ''
-      for (let i = 0; i < accountKeys.length; i++) {
-        const pkStr = accountKeys[i].pubkey.toBase58()
-        if (pkStr === poolStr) {
-          const pre = parsed.meta.preBalances[i] ?? 0
-          const post = parsed.meta.postBalances[i] ?? 0
-          amountReceived = post - pre
-        } else if (i === 0) {
-          senderStr = pkStr // fee payer / sender
-        }
-      }
+    // --- On-chain verification ---
+    const conn = getConnection()
+    const parsed = await conn.getParsedTransaction(signature, {
+      commitment: 'confirmed',
+      maxSupportedTransactionVersion: 0,
+    })
+    if (!parsed || !parsed.meta || parsed.meta.err) {
+      res.status(400).json({ error: 'Transaction not found or failed' })
+      return
+    }
 
-      if (amountReceived <= 0) {
-        res.status(400).json({ error: 'Pool wallet did not receive SOL in this transaction' })
-        return
+    // Verify the pool wallet received SOL
+    const poolStr = getPoolAddress().toBase58()
+    const accountKeys = parsed.transaction.message.accountKeys
+    let amountReceived = 0
+    let senderStr = ''
+    for (let i = 0; i < accountKeys.length; i++) {
+      const pkStr = accountKeys[i].pubkey.toBase58()
+      if (pkStr === poolStr) {
+        const pre = parsed.meta.preBalances[i] ?? 0
+        const post = parsed.meta.postBalances[i] ?? 0
+        amountReceived = post - pre
+      } else if (i === 0) {
+        senderStr = pkStr
       }
+    }
 
-      // Verify memo in transaction logs
-      const hasMemo = parsed.meta.logMessages?.some(log => log.includes(`"tip:${matchId}:${team}"`)) ?? false
-      if (!hasMemo) {
-        res.status(400).json({ error: 'Transaction missing required memo (tip:matchId:team)' })
-        return
-      }
+    if (amountReceived <= 0) {
+      res.status(400).json({ error: 'Pool wallet did not receive SOL in this transaction' })
+      return
+    }
 
-      if (!senderStr) {
-        res.status(400).json({ error: 'Could not determine sender' })
-        return
-      }
+    const hasMemo = parsed.meta.logMessages?.some(log => log.includes(`"tip:${matchId}:${team}"`)) ?? false
+    if (!hasMemo) {
+      res.status(400).json({ error: 'Transaction missing required memo (tip:matchId:team)' })
+      return
+    }
 
-      finalAmountLamports = amountReceived
-      userWallet = senderStr
+    if (!senderStr) {
+      res.status(400).json({ error: 'Could not determine sender' })
+      return
+    }
 
-      // Dedup: check if signature already in DB
-      const inserted = insertTip(signature, matchId, userWallet, teamNum, finalAmountLamports)
-      if (!inserted) {
-        res.status(409).json({ error: 'Tip signature already recorded', signature })
-        return
-      }
-    } else if (amount && amount > 0) {
-      // --- Dev fallback (no signature — simulated wallets without devnet SOL) ---
-      finalAmountLamports = Math.round(amount * LAMPORTS_PER_SOL)
-      // For dev fallback, userWallet comes from the JWT auth header
-      const authHeader = req.headers.authorization
-      if (authHeader && authHeader.startsWith('Bearer ')) {
-        try {
-          const jwt = await import('jsonwebtoken')
-          const secret = process.env.AUTH_SECRET || 'fallback-secret'
-          const decoded = jwt.default.verify(authHeader.slice(7), secret) as { wallet?: string }
-          userWallet = decoded.wallet || 'anonymous'
-        } catch {
-          userWallet = 'anonymous'
-        }
-      } else {
-        userWallet = 'anonymous'
-      }
-      const fakeSig = `sim_${matchId}_${team}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
-      insertTip(fakeSig, matchId, userWallet, teamNum, finalAmountLamports)
-    } else {
-      res.status(400).json({ error: 'Provide either a transaction signature or an amount' })
+    finalAmountLamports = amountReceived
+    userWallet = senderStr
+
+    const inserted = insertTip(signature, matchId, userWallet, teamNum, finalAmountLamports)
+    if (!inserted) {
+      res.status(409).json({ error: 'Tip signature already recorded', signature })
       return
     }
 

@@ -150,4 +150,4 @@ export interface BulkSeedProgress {
 
 export type TeamSide = 'home' | 'away';
 
-export type WalletProvider = 'phantom' | 'simulated' | '';
+export type WalletProvider = 'phantom' | '';

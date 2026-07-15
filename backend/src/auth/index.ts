@@ -26,29 +26,32 @@ function decodeBase58(input: string): Uint8Array {
 
 const router = Router()
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pitch_resonance_super_secret'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  console.error('FATAL: JWT_SECRET environment variable is required')
+  process.exit(1)
+}
 const NONCE_EXPIRY = 5 * 60 * 1000
 
 const nonces = new Map<string, { nonce: string; wallet: string; expiresAt: number }>()
 
-// Auth middleware — attaches req.user if valid token, does NOT block anonymous
+// Auth middleware — blocks unauthenticated requests
 export function authenticateToken(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization']
   const token = authHeader && authHeader.split(' ')[1]
 
   if (!token) {
-    ;(req as any).user = null
-    next()
+    res.status(401).json({ error: 'Authentication required' })
     return
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { wallet: string }
+    const decoded = jwt.verify(token, JWT_SECRET!) as unknown as { wallet: string }
     ;(req as any).user = decoded
+    next()
   } catch {
-    ;(req as any).user = null
+    res.status(401).json({ error: 'Invalid or expired token' })
   }
-  next()
 }
 
 // POST /api/auth/nonce
@@ -150,7 +153,7 @@ router.get('/me', (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(auth.slice(7), JWT_SECRET) as { wallet: string }
+    const decoded = jwt.verify(auth.slice(7), JWT_SECRET!) as unknown as { wallet: string }
     res.json({ wallet: decoded.wallet })
   } catch {
     res.status(401).json({ error: 'Invalid or expired token' })

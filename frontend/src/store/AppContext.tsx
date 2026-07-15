@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { Connection, Transaction, SystemProgram, TransactionInstruction, PublicKey, LAMPORTS_PER_SOL, Keypair } from '@solana/web3.js';
+import { Connection, Transaction, SystemProgram, TransactionInstruction, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Fixture, PhysicsFrame, TimelineFrame, TxItem, ToastState, TeamSide, WalletProvider } from './types';
 import * as api from './api';
 
@@ -8,7 +8,6 @@ const STORAGE_BACKEND_URL = 'pitch_resonance_backend_url';
 const STORAGE_AUTH_TOKEN = 'pitch_resonance_auth_token';
 const STORAGE_WALLET = 'pitch_resonance_wallet';
 const STORAGE_WALLET_PROVIDER = 'pitch_wallet_provider';
-const STORAGE_WALLET_SECRET = 'pitch_wallet_secret';
 const DEFAULT_BACKEND_URL = 'http://localhost:4000';
 const DEVNET_RPC = 'https://api.devnet.solana.com';
 const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
@@ -40,7 +39,6 @@ export interface AppState {
   authToken: string;
   walletConnected: boolean;
   walletProvider: WalletProvider;
-  walletSecretKey: string;
   isConnecting: boolean;
   isConfirmingTx: boolean;
   isSettled: boolean;
@@ -73,7 +71,7 @@ type Action =
   | { type: 'SET_BALANCE'; balance: number }
   | { type: 'SET_CONNECTING'; v: boolean }
   | { type: 'SET_CONFIRMING_TX'; v: boolean }
-  | { type: 'SET_WALLET'; address: string; token: string; provider: WalletProvider; secretKey?: string }
+  | { type: 'SET_WALLET'; address: string; token: string; provider: WalletProvider }
   | { type: 'CLEAR_WALLET' }
   | { type: 'ADD_TX'; tx: TxItem }
   | { type: 'SET_SETTLED'; v: boolean }
@@ -119,14 +117,11 @@ function reducer(state: AppState, action: Action): AppState {
     case 'SET_CONFIRMING_TX': return { ...state, isConfirmingTx: action.v };
     case 'SET_WALLET': {
       localStorage.setItem(STORAGE_WALLET_PROVIDER, action.provider);
-      if (action.secretKey) localStorage.setItem(STORAGE_WALLET_SECRET, action.secretKey);
-      else localStorage.removeItem(STORAGE_WALLET_SECRET);
-      return { ...state, walletAddress: action.address, authToken: action.token, walletConnected: true, walletProvider: action.provider, walletSecretKey: action.secretKey || '' };
+      return { ...state, walletAddress: action.address, authToken: action.token, walletConnected: true, walletProvider: action.provider };
     }
     case 'CLEAR_WALLET': {
       localStorage.removeItem(STORAGE_WALLET_PROVIDER);
-      localStorage.removeItem(STORAGE_WALLET_SECRET);
-      return { ...state, walletAddress: '', authToken: '', walletConnected: false, walletProvider: '', walletSecretKey: '', userStakeHome: 0, userStakeAway: 0 };
+      return { ...state, walletAddress: '', authToken: '', walletConnected: false, walletProvider: '', userStakeHome: 0, userStakeAway: 0 };
     }
     case 'ADD_TX': return { ...state, txHistory: [action.tx, ...state.txHistory] };
     case 'SET_SETTLED': return { ...state, isSettled: action.v };
@@ -140,10 +135,8 @@ function reducer(state: AppState, action: Action): AppState {
   }
 }
 
-function loadWalletState() {
-  const provider = localStorage.getItem(STORAGE_WALLET_PROVIDER) as WalletProvider | null;
-  const secret = localStorage.getItem(STORAGE_WALLET_SECRET) || '';
-  return { provider: provider || '', secretKey: secret };
+function loadWalletProvider() {
+  return (localStorage.getItem(STORAGE_WALLET_PROVIDER) as WalletProvider) || '';
 }
 
 const initialState: AppState = {
@@ -166,8 +159,7 @@ const initialState: AppState = {
   walletAddress: localStorage.getItem(STORAGE_WALLET) || '',
   authToken: localStorage.getItem(STORAGE_AUTH_TOKEN) || '',
   walletConnected: false,
-  walletProvider: loadWalletState().provider as WalletProvider,
-  walletSecretKey: loadWalletState().secretKey,
+  walletProvider: loadWalletProvider() as WalletProvider,
   isConnecting: false,
   isConfirmingTx: false,
   isSettled: false,
@@ -268,96 +260,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [state.fixtures, state.backendUrl]);
 
   const handleTip = useCallback(async (team: TeamSide, amount: number) => {
+    if (!state.walletProvider || !(window as any).solana?.isPhantom) {
+      showToast('Connect a Phantom wallet to send tips on devnet.', 'error');
+      return;
+    }
+
     const matchId = state.selectedMatchId || 'simulation';
     dispatch({ type: 'SET_CONFIRMING_TX', v: true });
 
     try {
-      let sig: string;
-      let explorerUrl: string | null = null;
+      const provider = (window as any).solana;
+      const conn = getConnection();
+      const fromPubkey = new PublicKey(state.walletAddress);
+      const poolAddress = await getPoolAddress();
+      const poolPubkey = new PublicKey(poolAddress);
 
-      if (state.walletProvider === 'phantom' && (window as any).solana?.isPhantom) {
-        const provider = (window as any).solana;
-        const conn = getConnection();
-        const fromPubkey = new PublicKey(state.walletAddress);
-        const poolAddress = await getPoolAddress();
-        const poolPubkey = new PublicKey(poolAddress);
+      const { blockhash } = await conn.getLatestBlockhash();
+      const lamports = Math.round(amount * LAMPORTS_PER_SOL);
 
-        const { blockhash } = await conn.getLatestBlockhash();
-        const lamports = Math.round(amount * LAMPORTS_PER_SOL);
+      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey });
+      tx.add(
+        SystemProgram.transfer({ fromPubkey, toPubkey: poolPubkey, lamports }),
+        new TransactionInstruction({
+          programId: new PublicKey(MEMO_PROGRAM_ID),
+          keys: [],
+          data: new TextEncoder().encode(`tip:${matchId}:${team}`) as unknown as Buffer,
+        })
+      );
 
-        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: fromPubkey });
-        tx.add(
-          SystemProgram.transfer({ fromPubkey, toPubkey: poolPubkey, lamports }),
-          new TransactionInstruction({
-            programId: new PublicKey(MEMO_PROGRAM_ID),
-            keys: [],
-            data: new TextEncoder().encode(`tip:${matchId}:${team}`) as unknown as Buffer,
-          })
-        );
+      const { signature } = await provider.signAndSendTransaction(tx);
 
-        const { signature } = await provider.signAndSendTransaction(tx);
-        sig = signature;
-        explorerUrl = `https://solscan.io/tx/${sig}?cluster=devnet`;
-
-        await api.sendTipSignature(state.backendUrl, matchId, team, sig);
-
-      } else if (state.walletProvider === 'simulated' && state.walletSecretKey) {
-        const conn = getConnection();
-        const secretBytes = new Uint8Array(JSON.parse(state.walletSecretKey));
-        const keypair = Keypair.fromSecretKey(secretBytes);
-        const poolAddress = await getPoolAddress();
-        const poolPubkey = new PublicKey(poolAddress);
-
-        const { blockhash } = await conn.getLatestBlockhash();
-        const lamports = Math.round(amount * LAMPORTS_PER_SOL);
-
-        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: keypair.publicKey });
-        tx.add(
-          SystemProgram.transfer({ fromPubkey: keypair.publicKey, toPubkey: poolPubkey, lamports }),
-          new TransactionInstruction({
-            programId: new PublicKey(MEMO_PROGRAM_ID),
-            keys: [],
-            data: new TextEncoder().encode(`tip:${matchId}:${team}`) as unknown as Buffer,
-          })
-        );
-
-        tx.sign(keypair);
-        sig = await conn.sendRawTransaction(tx.serialize());
-        await conn.confirmTransaction(sig, 'confirmed');
-        explorerUrl = `https://solscan.io/tx/${sig}?cluster=devnet`;
-
-        await api.sendTipSignature(state.backendUrl, matchId, team, sig);
-
-      } else {
-        // --- Anonymous fallback: no wallet, use dev fallback ---
-        const result = await api.sendTipAmount(state.backendUrl, matchId, team, amount, state.authToken);
-        sig = `sim_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        explorerUrl = null;
-      }
+      await api.sendTipSignature(state.backendUrl, matchId, team, signature);
 
       const matchInfo = state.fixtures.find(f => f.matchId === matchId);
-      dispatch({ type: 'ADD_TIP', team, amount: Math.round(amount * 1e9) / 1e9, sig });
+      dispatch({ type: 'ADD_TIP', team, amount: Math.round(amount * 1e9) / 1e9, sig: signature });
       dispatch({ type: 'ADD_TX', tx: {
-        id: sig,
+        id: signature,
         team,
         teamName: team === 'home' ? (matchInfo?.homeTeam || 'Home') : (matchInfo?.awayTeam || 'Away'),
         amount,
-        sig: sig.slice(0, 12),
+        sig: signature.slice(0, 12),
         timestamp: 'Just now',
       }});
 
       const teamName = team === 'home' ? (matchInfo?.homeTeam || 'Home') : (matchInfo?.awayTeam || 'Away');
-      const msg = explorerUrl
-        ? `Tipped ${amount} SOL to ${teamName} — ${explorerUrl}`
-        : `Tipped ${amount} SOL to ${teamName} (dev mode)`;
-      showToast(msg);
+      showToast(`Tipped ${amount} SOL to ${teamName} — https://solscan.io/tx/${signature}?cluster=devnet`);
     } catch (err: any) {
       console.error('Tip error:', err);
       showToast(err.message || 'Transaction failed', 'error');
     } finally {
       dispatch({ type: 'SET_CONFIRMING_TX', v: false });
     }
-  }, [state.backendUrl, state.selectedMatchId, state.fixtures, state.walletProvider, state.walletAddress, state.walletSecretKey, state.authToken, showToast, getPoolAddress]);
+  }, [state.backendUrl, state.selectedMatchId, state.fixtures, state.walletProvider, state.walletAddress, showToast, getPoolAddress]);
 
   const handleClaimWinnings = useCallback(async () => {
     const matchId = state.selectedMatchId || 'simulation';
@@ -404,9 +358,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (state.authToken && state.walletAddress) {
       api.checkAuth(state.backendUrl, state.authToken).then(data => {
         if (data) {
-          const provider = loadWalletState().provider;
-          const secret = loadWalletState().secretKey;
-          dispatch({ type: 'SET_WALLET', address: data.wallet, token: state.authToken, provider: provider as WalletProvider, secretKey: secret });
+          dispatch({ type: 'SET_WALLET', address: data.wallet, token: state.authToken, provider: 'phantom' });
           dispatch({ type: 'SET_ONBOARDING', step: 3 });
         } else {
           localStorage.removeItem(STORAGE_AUTH_TOKEN);

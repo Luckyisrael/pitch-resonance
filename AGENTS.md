@@ -22,7 +22,7 @@ pitch-resonance/
 ### Backend
 - `npm run dev` — dev server on :4000
 - `npm run build` — compile TS
-- `npm start` — run compiled JS
+- `npm start` — run compiled JS (auto-seeds DB from TxODDS on first boot)
 - `npm run fetch-historical` — batch-fetch all World Cup fixtures into SQLite
 
 ### Contract

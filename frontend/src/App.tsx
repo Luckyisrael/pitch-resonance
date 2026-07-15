@@ -14,8 +14,6 @@ import BoardTab from './components/BoardTab';
 import SandboxTab from './components/SandboxTab';
 import { useApp } from './store/AppContext';
 import * as api from './store/api';
-import type { WalletProvider } from './store/types';
-
 export default function App() {
   const { state, dispatch, showToast } = useApp();
   const [reownModalOpen, setReownModalOpen] = useState(false);
@@ -28,7 +26,7 @@ export default function App() {
     if (state.authToken) {
       api.checkAuth(state.backendUrl, state.authToken).then(data => {
         if (data) {
-          dispatch({ type: 'SET_WALLET', address: data.wallet, token: state.authToken });
+          dispatch({ type: 'SET_WALLET', address: data.wallet, token: state.authToken, provider: 'phantom' });
           dispatch({ type: 'SET_ONBOARDING', step: 3 });
         } else {
           localStorage.removeItem('pitch_resonance_auth_token');
@@ -37,11 +35,11 @@ export default function App() {
     }
   }, []);
 
-  const handleAuthSuccess = (address: string, token: string, provider: WalletProvider, secretKey?: string) => {
-    dispatch({ type: 'SET_WALLET', address, token, provider, secretKey });
+  const handleAuthSuccess = (address: string, token: string) => {
+    dispatch({ type: 'SET_WALLET', address, token, provider: 'phantom' });
     localStorage.setItem('pitch_resonance_auth_token', token);
     localStorage.setItem('pitch_resonance_wallet', address);
-    showToast(provider === 'simulated' ? 'Simulated Wallet Authenticated!' : 'Phantom Wallet Connected!');
+    showToast('Wallet Connected!');
     dispatch({ type: 'SET_ONBOARDING', step: 3 });
   };
 
@@ -168,12 +166,7 @@ export default function App() {
                   <span>Authenticate with Solana</span>
                 </button>
               )}
-              <div className="text-center">
-                <button onClick={() => { dispatch({ type: 'SET_ONBOARDING', step: 3 }); }}
-                  className="text-[10px] font-mono text-zinc-500 hover:text-zinc-400 uppercase font-bold tracking-wider underline cursor-pointer">
-                  Skip — Enter as Guest
-                </button>
-              </div>
+
             </div>
           </motion.div>
         )}
