@@ -8,7 +8,7 @@ const STORAGE_BACKEND_URL = 'pitch_resonance_backend_url';
 const STORAGE_AUTH_TOKEN = 'pitch_resonance_auth_token';
 const STORAGE_WALLET = 'pitch_resonance_wallet';
 const STORAGE_WALLET_PROVIDER = 'pitch_wallet_provider';
-const DEFAULT_BACKEND_URL = 'http://localhost:4000';
+const DEFAULT_BACKEND_URL = 'https://pitch-resonance.onrender.com';
 const DEVNET_RPC = 'https://api.devnet.solana.com';
 const MEMO_PROGRAM_ID = 'MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr';
 
