@@ -3,27 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  X, Wallet, Shield, Key, Copy, Check, 
-  Sparkles, RefreshCw, Smartphone, Cpu, Link2, Info 
+  X, Wallet, Shield, Smartphone, Link2
 } from 'lucide-react';
-import { Keypair } from '@solana/web3.js';
-import nacl from 'tweetnacl';
-
-const bytesToHex = (arr: Uint8Array): string => {
-  return Array.from(arr)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-};
 
 interface ReownWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
   backendUrl: string;
   setBackendUrl: (url: string) => void;
-  onAuthSuccess: (walletAddress: string, token: string, provider: 'phantom' | 'simulated', secretKey?: string) => void;
+  onAuthSuccess: (walletAddress: string, token: string) => void;
 }
 
 export default function ReownWalletModal({
@@ -33,42 +24,15 @@ export default function ReownWalletModal({
   setBackendUrl,
   onAuthSuccess
 }: ReownWalletModalProps) {
-  const [activeTab, setActiveTab] = useState<'wallets' | 'manual' | 'settings'>('wallets');
+  const [activeTab, setActiveTab] = useState<'wallets' | 'settings'>('wallets');
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string>('');
-  
-  // Generated Developer Keypair state
-  const [simKeypair, setSimKeypair] = useState<Keypair | null>(null);
-  const [copiedPub, setCopiedPub] = useState<boolean>(false);
-  const [copiedPriv, setCopiedPriv] = useState<boolean>(false);
-
-  // Generate a keypair on mount so the user has an instant developer wallet
-  useEffect(() => {
-    try {
-      const kp = Keypair.generate();
-      setSimKeypair(kp);
-    } catch (e) {
-      console.warn("Failed to generate keypair", e);
-    }
-  }, []);
-
-  const handleCopy = (text: string, type: 'pub' | 'priv') => {
-    navigator.clipboard.writeText(text);
-    if (type === 'pub') {
-      setCopiedPub(true);
-      setTimeout(() => setCopiedPub(false), 2000);
-    } else {
-      setCopiedPriv(true);
-      setTimeout(() => setCopiedPriv(false), 2000);
-    }
-  };
 
   // Perform full authentic signature-based authentication flow
   const authenticateWithAddress = async (publicKeyStr: string, signMessageFn: (message: string) => Promise<string>) => {
     setIsConnecting(true);
     setErrorMsg('');
     try {
-      // 1. Get Nonce
       const nonceRes = await fetch(`${backendUrl}/api/auth/nonce`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,18 +46,12 @@ export default function ReownWalletModal({
       const nonceData = await nonceRes.json();
       const { nonce, message } = nonceData;
       
-      // 2. Sign Message
       const signatureHex = await signMessageFn(message);
       
-      // 3. Verify Signature
       const verifyRes = await fetch(`${backendUrl}/api/auth/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: publicKeyStr,
-          signature: signatureHex,
-          nonce: nonce
-        })
+        body: JSON.stringify({ wallet: publicKeyStr, signature: signatureHex, nonce })
       });
       
       if (!verifyRes.ok) {
@@ -103,44 +61,41 @@ export default function ReownWalletModal({
       const verifyData = await verifyRes.json();
       const { token } = verifyData;
       
-      onAuthSuccess(publicKeyStr, token, 'phantom');
+      onAuthSuccess(publicKeyStr, token);
       onClose();
     } catch (err: any) {
       console.warn("Auth flow error:", err);
-      if (err.message === 'Failed to fetch' || (err.message && err.message.includes('fetch')) || !err.message) {
+      if (!err.message || err.message === 'Failed to fetch') {
         if (backendUrl.includes('devtunnels.ms')) {
-          setErrorMsg('Failed to fetch. Microsoft Dev Tunnels require you to authorize the connection in your browser first. Please click the button below to authorize it.');
+          setErrorMsg('Failed to fetch. Microsoft Dev Tunnels require you to authorize the connection in your browser first.');
         } else {
-          setErrorMsg(err.message || 'Failed to fetch from backend. Is your backend server running and does it allow CORS?');
+          setErrorMsg('Failed to connect to backend. Is your server running and does it allow CORS?');
         }
       } else {
-        setErrorMsg(err.message || 'Authentication failed. Is your backend server running?');
+        setErrorMsg(err.message || 'Authentication failed.');
       }
     } finally {
       setIsConnecting(false);
     }
   };
 
-  // Connect via standard browser wallet extension (Phantom)
+  // Connect via browser wallet extension (Phantom/Solflare)
   const handleConnectExtension = async () => {
     const provider = (window as any).solana;
     if (!provider || !provider.isPhantom) {
-      setErrorMsg("Phantom wallet extension not detected in this browser! Try 'Manual Signer' tab below to authenticate without extensions.");
+      setErrorMsg("Phantom wallet extension not detected in this browser.");
       return;
     }
 
     setIsConnecting(true);
     setErrorMsg('');
     try {
-      // Connect to wallet
       const resp = await provider.connect();
       const pubKey = resp.publicKey.toString();
 
-      // Sign message callback
       const signMessageFn = async (msg: string) => {
         const encodedMessage = new TextEncoder().encode(msg);
         const signedMessage = await provider.signMessage(encodedMessage, 'utf8');
-        // Convert signature Uint8Array to hex
         return Array.from(signedMessage.signature as Uint8Array)
           .map(b => b.toString(16).padStart(2, '0'))
           .join('');
@@ -149,69 +104,6 @@ export default function ReownWalletModal({
       await authenticateWithAddress(pubKey, signMessageFn);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to sign with browser extension.");
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Connect via cryptographic simulation (using the generated Developer Keypair)
-  const handleConnectSimulated = async () => {
-    if (!simKeypair) return;
-    const pubKey = simKeypair.publicKey.toString();
-
-    const signMessageFn = async (msg: string) => {
-      const messageBytes = new TextEncoder().encode(msg);
-      const signatureBytes = nacl.sign.detached(messageBytes, simKeypair.secretKey);
-      // Convert to hex
-      return Array.from(signatureBytes)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    };
-
-    await authenticateWithAddress(pubKey, signMessageFn);
-  };
-
-  // Connect via cryptographic simulation (using the generated Developer Keypair)
-  const handleConnectSimulatedWithKey = async () => {
-    if (!simKeypair) return;
-    const pubKey = simKeypair.publicKey.toString();
-    const secretKeyJson = JSON.stringify(Array.from(simKeypair.secretKey));
-
-    const signMessageFn = async (msg: string) => {
-      const messageBytes = new TextEncoder().encode(msg);
-      const signatureBytes = nacl.sign.detached(messageBytes, simKeypair.secretKey);
-      return Array.from(signatureBytes)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-    };
-
-    setIsConnecting(true);
-    setErrorMsg('');
-    try {
-      const nonceRes = await fetch(`${backendUrl}/api/auth/nonce`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: pubKey })
-      });
-      if (!nonceRes.ok) throw new Error(`Nonce request failed: ${nonceRes.statusText}`);
-      const nonceData = await nonceRes.json();
-      const { nonce, message } = nonceData;
-
-      const signatureHex = await signMessageFn(message);
-
-      const verifyRes = await fetch(`${backendUrl}/api/auth/verify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: pubKey, signature: signatureHex, nonce })
-      });
-      if (!verifyRes.ok) throw new Error(`Verification failed: ${verifyRes.statusText}`);
-      const verifyData = await verifyRes.json();
-      const { token } = verifyData;
-
-      onAuthSuccess(pubKey, token, 'simulated', secretKeyJson);
-      onClose();
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Simulated authentication failed');
     } finally {
       setIsConnecting(false);
     }
@@ -258,7 +150,7 @@ export default function ReownWalletModal({
         </div>
 
         {/* Tab Selection */}
-        <div className="grid grid-cols-3 bg-[#111112] border-b border-zinc-850 p-1">
+        <div className="grid grid-cols-2 bg-[#111112] border-b border-zinc-850 p-1">
           <button
             onClick={() => setActiveTab('wallets')}
             className={`py-2.5 text-[10px] font-mono uppercase tracking-wider rounded-lg transition-all ${
@@ -268,16 +160,6 @@ export default function ReownWalletModal({
             }`}
           >
             🔌 Wallets
-          </button>
-          <button
-            onClick={() => setActiveTab('manual')}
-            className={`py-2.5 text-[10px] font-mono uppercase tracking-wider rounded-lg transition-all ${
-              activeTab === 'manual' 
-                ? 'bg-zinc-900 text-amber-400 border-b-2 border-amber-500 font-black' 
-                : 'text-zinc-500 hover:text-zinc-300'
-            }`}
-          >
-            ⚡ Simulated Key
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -348,85 +230,10 @@ export default function ReownWalletModal({
                     </span>
                   </button>
                 </div>
-
-                <div className="p-3 bg-blue-950/20 border border-blue-900/30 rounded-xl flex gap-2.5 items-start mt-4">
-                  <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-zinc-400 leading-normal">
-                    <b>Iframe Sandbox Notice:</b> If standard browser extension popups are restricted inside this preview container, please use the <b>Simulated Key</b> tab above to test 100% genuine cryptographic sign-in.
-                  </p>
-                </div>
               </div>
             )}
 
-            {/* 2. MANUAL SIMULATED SIGNER TAB */}
-            {activeTab === 'manual' && (
-              <div className="space-y-4">
-                <div className="p-3 bg-amber-950/15 border border-amber-900/30 rounded-xl flex gap-2 text-amber-400">
-                  <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-                  <p className="text-[10px] leading-normal">
-                    This developer tool generates a real Solana Keypair inside browser RAM, fetches the message from your backend, cryptographically signs it with <b>tweetnacl</b>, and verifies it with your server!
-                  </p>
-                </div>
-
-                {simKeypair && (
-                  <div className="bg-[#111112] border border-zinc-850 p-4 rounded-xl space-y-3 font-mono text-xs">
-                    {/* Public Key Display */}
-                    <div>
-                      <div className="flex justify-between text-[10px] text-zinc-500 uppercase font-bold mb-1">
-                        <span>Solana Public Key (RAM)</span>
-                        <button 
-                          onClick={() => handleCopy(simKeypair.publicKey.toString(), 'pub')}
-                          className="text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedPub ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedPub ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                      <div className="bg-zinc-950 p-2 rounded text-zinc-300 break-all border border-zinc-900 text-[10px] font-bold">
-                        {simKeypair.publicKey.toString()}
-                      </div>
-                    </div>
-
-                    {/* Private Key Display */}
-                    <div>
-                      <div className="flex justify-between text-[10px] text-zinc-500 uppercase font-bold mb-1">
-                        <span>Secret Private Seed</span>
-                        <button 
-                          onClick={() => handleCopy(bytesToHex(simKeypair.secretKey), 'priv')}
-                          className="text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer"
-                        >
-                          {copiedPriv ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                          <span>{copiedPriv ? 'Copied' : 'Copy'}</span>
-                        </button>
-                      </div>
-                      <div className="bg-zinc-950 p-2 rounded text-zinc-400 truncate border border-zinc-900 text-[10px]">
-                        {bytesToHex(simKeypair.secretKey)}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <button
-                  onClick={handleConnectSimulatedWithKey}
-                  disabled={isConnecting}
-                  className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-black rounded-xl text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
-                >
-                  {isConnecting ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      <span>Signing cryptographically...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Key className="w-4 h-4 text-black" />
-                      <span>Generate & Sign Nonce</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* 3. SETTINGS TAB */}
+            {/* 2. SETTINGS TAB */}
             {activeTab === 'settings' && (
               <div className="space-y-4">
                 <p className="text-xs text-zinc-400 leading-relaxed">

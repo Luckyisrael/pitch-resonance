@@ -269,14 +269,10 @@ export default function LiveTab() {
                   <span className="text-[10px] font-mono text-zinc-300">{tx.teamName}</span>
                   <span className="text-[10px] font-mono text-zinc-500">+{tx.amount.toFixed(2)} SOL</span>
                 </div>
-                {tx.id.startsWith('sim_') || tx.id.startsWith('http') ? (
-                  <span className="text-[8px] font-mono text-zinc-600">{tx.sig}{tx.id.startsWith('sim_') ? ' (dev)' : ''}</span>
-                ) : (
-                  <a href={`https://solscan.io/tx/${tx.id}?cluster=devnet`} target="_blank" rel="noopener noreferrer"
-                    className="text-[8px] font-mono text-amber-400 hover:text-amber-300 underline truncate max-w-[100px]">
-                    {tx.sig}...
-                  </a>
-                )}
+                <a href={`https://solscan.io/tx/${tx.id}?cluster=devnet`} target="_blank" rel="noopener noreferrer"
+                  className="text-[8px] font-mono text-amber-400 hover:text-amber-300 underline truncate max-w-[100px]">
+                  {tx.sig}...
+                </a>
               </div>
             ))}
           </div>

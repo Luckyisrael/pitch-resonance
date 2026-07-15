@@ -78,26 +78,6 @@ export async function sendTipSignature(
   return res.json();
 }
 
-/** Dev fallback: send tip amount directly (no on-chain tx) */
-export async function sendTipAmount(
-  baseUrl: string,
-  matchId: string,
-  team: 'home' | 'away',
-  amount: number,
-  token: string
-): Promise<{ success: boolean; amount: number; lamports: number; explorerUrl: null }> {
-  const res = await fetch(`${baseUrl}/api/hype/tip`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ matchId, team, amount }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || 'Tip failed');
-  }
-  return res.json();
-}
-
 /** Claim winnings for a settled match */
 export async function claimWinnings(
   baseUrl: string,

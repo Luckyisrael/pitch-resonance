@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "node dist/scripts/seed-on-startup.js && node dist/index.js",
     "fetch-historical": "tsx src/scripts/fetch-historical.ts"
   },
   "dependencies": {
