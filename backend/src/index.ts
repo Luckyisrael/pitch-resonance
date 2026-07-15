@@ -20,7 +20,8 @@ import { getPoolKeypair, getPoolAddress, getConnection, ensurePoolBalance, lampo
 import { Connection, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
 
 const PORT = parseInt(process.env.PORT || '4000')
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000'
+const FRONTEND_URL = process.env.FRONTEND_URL || '*'
+
 const TXODDS_API_BASE = process.env.TXODDS_API_BASE || 'https://txline-dev.txodds.com/api'
 const TXODDS_JWT = process.env.TXODDS_JWT || ''
 const TXODDS_API_TOKEN = process.env.TXODDS_API_TOKEN || ''
@@ -30,7 +31,7 @@ type MatchPool = { homePool: number; awayPool: number }
 type ShockwaveQueue = Array<{ originX: number; originY: number; intensity: number; tipId: string; team: 1 | 2 }>
 
 const app = express()
-const corsOrigins = FRONTEND_URL === '*' ? '*' : FRONTEND_URL.split(',').map(s => s.trim())
+const corsOrigins = FRONTEND_URL === '*' ? true : FRONTEND_URL.split(',').map(s => s.trim())
 app.use(cors({ origin: corsOrigins, credentials: true }))
 app.use(express.json())
 
