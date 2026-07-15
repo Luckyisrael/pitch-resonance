@@ -71,14 +71,14 @@ export default function BoardTab() {
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-zinc-800 border border-zinc-800">
         {[
           { label: 'Matches', value: stats.totalMatches, icon: <Trophy className="w-5 h-5" />, color: 'text-amber-400' },
           { label: 'Total Goals', value: stats.totalGoals, icon: <Goal className="w-5 h-5" />, color: 'text-emerald-400' },
           { label: 'Total Tipped', value: `${(stats.totalTips / 1e9).toFixed(1)} SOL`, icon: <Coins className="w-5 h-5" />, color: 'text-sky-400' },
           { label: 'Tippers', value: stats.uniqueTippers, icon: <Users className="w-5 h-5" />, color: 'text-rose-400' },
         ].map(s => (
-          <div key={s.label} className="bg-[#141415] border border-zinc-800 p-4 rounded-2xl space-y-2">
+          <div key={s.label} className="bg-[#141415] p-5 space-y-3">
             <div className="flex items-center gap-2 text-zinc-500">
               <span className={s.color}>{s.icon}</span>
               <span className="text-[9px] font-mono font-black uppercase tracking-wider">{s.label}</span>
@@ -89,17 +89,17 @@ export default function BoardTab() {
       </div>
 
       {/* Leaderboard */}
-      <div className="bg-[#141415] border border-zinc-800 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Award className="w-5 h-5 text-amber-400" />
-          <h2 className="text-sm font-black text-white uppercase tracking-tight">Top Tippers Leaderboard</h2>
+      <div className="border border-zinc-800">
+        <div className="bg-[#141415] p-5 border-b border-zinc-800">
+          <span className="text-[9px] font-mono tracking-[0.2em] font-black text-amber-400 uppercase">Leaderboard</span>
+          <h2 className="text-lg font-black text-white uppercase tracking-tight mt-1">Top Tippers</h2>
         </div>
         {stats.topTippers.length === 0 ? (
           <p className="text-xs font-mono text-zinc-600">No tips have been placed yet.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-px bg-zinc-800">
             {stats.topTippers.map((t, i) => (
-              <div key={t.wallet} className="flex items-center justify-between py-2 px-3 bg-[#0C0C0D] rounded-xl border border-zinc-900">
+              <div key={t.wallet} className="flex items-center justify-between py-2 px-3 bg-[#0C0C0D]">
                 <div className="flex items-center gap-3">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black font-mono ${
                     i === 0 ? 'bg-amber-400 text-black' : i === 1 ? 'bg-zinc-300 text-zinc-800' : i === 2 ? 'bg-amber-800 text-amber-200' : 'bg-zinc-800 text-zinc-400'
@@ -122,14 +122,14 @@ export default function BoardTab() {
       </div>
 
       {/* Match Results */}
-      <div className="bg-[#141415] border border-zinc-800 rounded-2xl p-6 space-y-4">
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-sky-400" />
-          <h2 className="text-sm font-black text-white uppercase tracking-tight">Match Results</h2>
+      <div className="border border-zinc-800">
+        <div className="bg-[#141415] p-5 border-b border-zinc-800">
+          <span className="text-[9px] font-mono tracking-[0.2em] font-black text-sky-400 uppercase">Results</span>
+          <h2 className="text-lg font-black text-white uppercase tracking-tight mt-1">Match Results</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-zinc-800">
           {stats.matchResults.map(m => (
-            <div key={m.matchId} className="flex items-center justify-between p-3 bg-[#0C0C0D] rounded-xl border border-zinc-900">
+            <div key={m.matchId} className="flex items-center justify-between p-3 bg-[#0C0C0D]">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="text-sm">{getFlag(m.homeTeam)}</span>
                 <span className="text-xs font-mono font-bold text-zinc-300 truncate">{m.homeTeam}</span>

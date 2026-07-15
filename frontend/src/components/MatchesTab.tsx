@@ -68,27 +68,31 @@ export default function MatchesTab() {
     return (
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-4">
         <button onClick={handleBack}
-          className="flex items-center gap-2 text-zinc-400 hover:text-white text-xs font-mono font-bold uppercase tracking-wider cursor-pointer transition-all">
+          className="flex items-center gap-2 text-zinc-500 hover:text-white text-xs font-mono font-bold uppercase tracking-wider cursor-pointer transition-all">
           <ArrowLeft className="w-4 h-4" />
-          Back to Fixtures
+          Fixtures
         </button>
         {match && (
-          <div className="bg-[#141415] border border-zinc-800 p-4 rounded-2xl flex items-center gap-4">
-            <span className="text-2xl">{getFlag(match.homeTeam)}</span>
-            <div className="flex-1">
-              <span className="text-sm font-black text-white uppercase">{match.homeTeam}</span>
-              <span className="text-xs font-mono text-zinc-500 mx-2">vs</span>
-              <span className="text-sm font-black text-white uppercase">{match.awayTeam}</span>
-              <div className="flex items-center gap-3 mt-1">
-                <span className="text-xs font-mono text-zinc-500">{match.matchDate || 'Unknown date'}</span>
-                {match.homeScore !== undefined && (
-                  <span className="text-xs font-mono font-black text-zinc-300">{match.homeScore} - {match.awayScore}</span>
-                )}
+          <div className="border border-zinc-800">
+            <div className="p-4 flex items-center gap-4">
+              <span className="text-2xl">{getFlag(match.homeTeam)}</span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black text-white uppercase">{match.homeTeam}</span>
+                  <span className="text-[10px] font-mono text-zinc-600 uppercase">vs</span>
+                  <span className="text-sm font-black text-white uppercase">{match.awayTeam}</span>
+                </div>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] font-mono text-zinc-500">{match.matchDate || 'Unknown date'}</span>
+                  {match.homeScore !== undefined && (
+                    <span className="text-xs font-mono font-black text-zinc-300">{match.homeScore} - {match.awayScore}</span>
+                  )}
+                </div>
               </div>
+              {match.winner !== null && match.winner > 0 && (
+                <Trophy className="w-5 h-5 text-amber-400 shrink-0" />
+              )}
             </div>
-            {match.winner !== null && match.winner > 0 && (
-              <Trophy className="w-5 h-5 text-amber-400 shrink-0" />
-            )}
           </div>
         )}
         <MatchVisualizerMain compact />
@@ -99,20 +103,29 @@ export default function MatchesTab() {
   // Grid view
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-black text-white uppercase tracking-tight">World Cup Fixtures</h2>
-          <p className="text-xs font-mono text-zinc-500 mt-1">{state.fixtures.length} matches loaded</p>
+      <div className="border border-zinc-800 relative">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-0 left-0 w-px h-full bg-zinc-800/40" />
+          <div className="absolute top-0 right-0 w-px h-full bg-zinc-800/40" />
         </div>
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Search teams..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-[#1e1e20] border border-zinc-800 text-white rounded-xl text-xs p-2.5 pl-9 font-sans focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder-zinc-600"
-          />
+        <div className="relative z-10 grid md:grid-cols-12 gap-px bg-zinc-800">
+          <div className="md:col-span-7 bg-[#111112] p-5 space-y-1">
+            <span className="text-[9px] font-mono tracking-[0.2em] font-black text-amber-400 uppercase block">Historical Database</span>
+            <h2 className="text-xl font-black text-white uppercase tracking-tight">WORLD CUP FIXTURES</h2>
+            <p className="text-[10px] font-mono text-zinc-500">{state.fixtures.length} matches loaded</p>
+          </div>
+          <div className="md:col-span-5 bg-[#141415] p-5 flex items-center">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+              <input
+                type="text"
+                placeholder="Search teams..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full bg-[#1e1e20] border border-zinc-800 text-white text-xs p-2.5 pl-9 font-sans focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder-zinc-600"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -131,39 +144,41 @@ export default function MatchesTab() {
               <motion.button
                 key={f.matchId}
                 onClick={() => handleSelectReplay(f.matchId)}
-                className="bg-[#141415] border border-zinc-800 hover:border-zinc-700 rounded-2xl p-5 text-left cursor-pointer transition-all active:scale-[0.98]"
+                className="bg-[#141415] border border-zinc-800 hover:border-zinc-700 text-left cursor-pointer transition-all active:scale-[0.98]"
                 whileHover={{ y: -2 }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{getFlag(f.homeTeam)}</span>
-                    <span className="text-sm font-black text-white uppercase">{f.homeTeam}</span>
+                <div className="p-5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl">{getFlag(f.homeTeam)}</span>
+                      <span className="text-xs font-black text-white uppercase">{f.homeTeam}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-white uppercase">{f.awayTeam}</span>
+                      <span className="text-xl">{getFlag(f.awayTeam)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-black text-white uppercase">{f.awayTeam}</span>
-                    <span className="text-xl">{getFlag(f.awayTeam)}</span>
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-2xl font-mono font-black text-white">{f.homeScore}</span>
+                    <span className="text-zinc-600 text-xs">-</span>
+                    <span className="text-2xl font-mono font-black text-white">{f.awayScore}</span>
                   </div>
-                </div>
-                <div className="flex items-center justify-center gap-3 mb-3">
-                  <span className="text-2xl font-mono font-black text-white">{f.homeScore}</span>
-                  <span className="text-zinc-600 text-sm">-</span>
-                  <span className="text-2xl font-mono font-black text-white">{f.awayScore}</span>
-                </div>
-                <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                  <span>{f.matchDate || ''}</span>
-                  <div className="flex items-center gap-1.5">
-                    {f.winner !== null && f.winner > 0 && (
-                      <span className="flex items-center gap-1 text-emerald-400">
-                        <CheckCircle className="w-3 h-3" />
-                        Settled
-                      </span>
-                    )}
-                    {totalPool > 0 && (
-                      <span className="flex items-center gap-1 text-amber-400">
-                        <Coins className="w-3 h-3" />
-                        {(totalPool / 1e9).toFixed(2)} SOL
-                      </span>
-                    )}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-zinc-500 pt-2 border-t border-zinc-800/50">
+                    <span>{f.matchDate || ''}</span>
+                    <div className="flex items-center gap-1.5">
+                      {f.winner !== null && f.winner > 0 && (
+                        <span className="flex items-center gap-1 text-emerald-400">
+                          <CheckCircle className="w-3 h-3" />
+                          Settled
+                        </span>
+                      )}
+                      {totalPool > 0 && (
+                        <span className="flex items-center gap-1 text-amber-400">
+                          <Coins className="w-3 h-3" />
+                          {(totalPool / 1e9).toFixed(2)} SOL
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </motion.button>

@@ -182,73 +182,135 @@ export default function App() {
         )}
 
         {state.onboardingStep === 1 && (
-          <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="flex-grow max-w-xl mx-auto flex flex-col justify-center px-6 py-16"
+          <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex-grow flex flex-col justify-center px-6 py-16"
           >
-            <div className="bg-[#141415] border border-zinc-800 p-8 sm:p-10 rounded-3xl shadow-2xl space-y-8 relative overflow-hidden">
-              <div className="space-y-3">
-                <span className="text-[10px] font-mono tracking-widest font-black text-amber-400 uppercase">AUTONOMOUS DISTRIBUTION</span>
-                <h2 className="text-2xl font-black text-white tracking-tight leading-none uppercase">HOW THE VICTORY PURSE WORKS</h2>
-                <p className="text-xs text-zinc-400 leading-relaxed">
-                  Payouts are governed entirely by a decentralized Solana smart contract program.
-                </p>
-                <div className="p-4 bg-[#0C0C0D] border border-zinc-850 rounded-xl space-y-3">
-                  <div className="flex justify-between items-center text-zinc-400">
-                    <span className="font-bold flex items-center gap-1.5 uppercase"><Percent className="w-3.5 h-3.5 text-amber-400" /> Platform Fee</span>
-                    <span className="text-white font-black">{PLATFORM_FEE_PERCENT}% Retained</span>
+            <div className="max-w-2xl mx-auto w-full relative">
+
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 left-[33%] w-px h-full bg-zinc-800/20" />
+                <div className="absolute top-0 right-[33%] w-px h-full bg-zinc-800/20" />
+                <div className="absolute top-0 left-0 w-px h-full bg-zinc-800/40" />
+                <div className="absolute top-0 right-0 w-px h-full bg-zinc-800/40" />
+              </div>
+
+              <div className="relative z-10 space-y-8">
+                <div className="space-y-1">
+                  <span className="text-[10px] font-mono tracking-[0.3em] font-black text-amber-400 uppercase block">AUTONOMOUS DISTRIBUTION</span>
+                  <div className="w-12 h-[3px] bg-amber-400 mt-3" />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-px bg-zinc-800 border border-zinc-800">
+                  <div className="bg-[#111112] p-6">
+                    <h2 className="text-xl font-black text-white leading-[1.1] uppercase tracking-tight">
+                      HOW THE<br />
+                      <span className="text-zinc-500">VICTORY PURSE</span><br />
+                      WORKS
+                    </h2>
                   </div>
-                  <div className="flex justify-between items-center text-zinc-400">
-                    <span className="font-bold flex items-center gap-1.5 uppercase"><Trophy className="w-3.5 h-3.5 text-sky-400" /> Winner Distribution</span>
-                    <span className="text-white font-black">{DISTRIBUTION_PERCENT}% Shared</span>
+                  <div className="bg-[#111112] p-6 flex flex-col justify-center">
+                    <p className="text-xs text-zinc-400 leading-relaxed">
+                      Payouts are governed entirely by a decentralized Solana smart contract program. No intermediaries, no manual settlement.
+                    </p>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-px bg-zinc-800 border border-zinc-800">
+                  <div className="bg-[#141415] p-6 space-y-3">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                      <Percent className="w-4 h-4 text-amber-400" />
+                      <span className="text-[10px] font-mono tracking-widest font-bold uppercase">Platform Fee</span>
+                    </div>
+                    <p className="text-2xl font-black text-white">{PLATFORM_FEE_PERCENT}%</p>
+                    <p className="text-[10px] font-mono text-zinc-500">Retained by protocol</p>
+                  </div>
+                  <div className="bg-[#141415] p-6 space-y-3">
+                    <div className="flex items-center gap-2 text-zinc-500">
+                      <Trophy className="w-4 h-4 text-sky-400" />
+                      <span className="text-[10px] font-mono tracking-widest font-bold uppercase">Winner Distribution</span>
+                    </div>
+                    <p className="text-2xl font-black text-white">{DISTRIBUTION_PERCENT}%</p>
+                    <p className="text-[10px] font-mono text-zinc-500">Shared among winning backers</p>
+                  </div>
+                </div>
+
+                <div className="p-5 bg-[#0C0C0D] border border-zinc-900 space-y-2">
+                  <p className="text-[10px] font-mono font-bold text-zinc-500 uppercase tracking-wider">Parimutuel Math</p>
+                  <p className="text-xs font-mono text-zinc-400 leading-relaxed">
+                    Your payout = <span className="text-amber-400">(your stake ÷ total winning pool)</span> × pool balance × {DISTRIBUTION_PERCENT}%. Early stakes earn a 1.5× decay weight multiplier that decreases linearly to 0.1× by minute 95.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 0 })}
+                    className="px-6 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold text-xs uppercase transition-all cursor-pointer border border-zinc-800">
+                    Back
+                  </button>
+                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 2 })}
+                    className="flex-1 py-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase flex items-center justify-center gap-2 transition-all active:scale-[0.98] cursor-pointer">
+                    <span>Authenticate</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <div className="pt-4 flex gap-3">
-                <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 0 })}
-                  className="px-5 py-4 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 font-bold rounded-xl text-xs uppercase transition-all cursor-pointer">Back</button>
-                <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 2 })}
-                  className="flex-1 py-4 bg-amber-400 hover:bg-amber-300 text-black font-black rounded-xl text-xs uppercase flex items-center justify-center gap-2 transition-all cursor-pointer">
-                  <span>Go to Authentication</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </div>
+
+              <div className="absolute -bottom-6 -left-6 w-20 h-20 border border-zinc-800/30 -rotate-12 pointer-events-none" />
             </div>
           </motion.div>
         )}
 
         {state.onboardingStep === 2 && (
-          <motion.div key="step2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="flex-grow max-w-xl mx-auto flex flex-col justify-center px-6 py-16"
+          <motion.div key="step2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="flex-grow flex flex-col justify-center px-6 py-16"
           >
-            <div className="bg-[#141415] border border-zinc-800 p-8 sm:p-10 rounded-3xl shadow-2xl space-y-8 relative overflow-hidden">
-              <div className="text-center space-y-3">
-                <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto">
-                  <Lock className="w-6 h-6 text-amber-400" />
-                </div>
-                <span className="text-[10px] font-mono tracking-widest font-black text-amber-400 uppercase block">FAN VERIFICATION</span>
-                <h2 className="text-2xl font-black text-white tracking-tight leading-none uppercase">CONNECT WALLET TO ENTER</h2>
-                <p className="text-xs text-zinc-400 leading-relaxed max-w-sm mx-auto">
-                  Authenticate with your Solana wallet to enable parimutuel stakes on Devnet.
-                </p>
+            <div className="max-w-xl mx-auto w-full relative">
+
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute top-0 left-0 w-px h-full bg-zinc-800/40" />
+                <div className="absolute top-0 right-0 w-px h-full bg-zinc-800/40" />
+                <div className="absolute top-[30%] left-0 w-full h-px bg-zinc-800/20" />
+                <div className="absolute top-[70%] left-0 w-full h-px bg-zinc-800/20" />
               </div>
-              {state.walletConnected ? (
-                <div className="p-4 bg-emerald-950/20 border border-emerald-500/20 rounded-xl text-center space-y-3">
-                  <Check className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <p className="text-xs font-mono text-emerald-300">Wallet Connected</p>
-                  <p className="text-[10px] font-mono text-zinc-400">{state.walletAddress.slice(0, 8)}...{state.walletAddress.slice(-4)}</p>
-                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 3 })}
-                    className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-black font-black rounded-xl text-xs uppercase flex items-center justify-center gap-2 cursor-pointer">
-                    <span>Enter Arena</span>
-                    <ArrowRight className="w-4 h-4" />
+
+              <div className="relative z-10 bg-[#141415] border border-zinc-800">
+                <div className="p-8 sm:p-10 space-y-2 text-center">
+                  <div className="w-14 h-14 bg-[#111112] border border-zinc-800 flex items-center justify-center mx-auto">
+                    <Lock className="w-6 h-6 text-amber-400" />
+                  </div>
+                  <div className="w-8 h-[3px] bg-amber-400 mx-auto my-4" />
+                  <span className="text-[10px] font-mono tracking-[0.3em] font-black text-amber-400 uppercase block">FAN VERIFICATION</span>
+                  <h2 className="text-2xl font-black text-white tracking-tight leading-none uppercase">CONNECT WALLET</h2>
+                  <p className="text-xs text-zinc-500 leading-relaxed max-w-xs mx-auto">
+                    Authenticate with your Solana wallet to enable parimutuel stakes on Devnet.
+                  </p>
+                </div>
+
+                <div className="border-t border-zinc-800 p-6 space-y-4">
+                  {state.walletConnected ? (
+                    <div className="space-y-4">
+                      <div className="p-4 bg-[#0C0C0D] border border-zinc-900 text-center space-y-2">
+                        <p className="text-xs font-mono text-emerald-400 font-bold uppercase tracking-wider">Wallet Connected</p>
+                        <p className="text-[11px] font-mono text-zinc-400">{state.walletAddress.slice(0, 8)}...{state.walletAddress.slice(-4)}</p>
+                      </div>
+                      <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 3 })}
+                        className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]">
+                        <span>Enter Arena</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setReownModalOpen(true)}
+                      className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-black font-black text-xs uppercase flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.98]">
+                      <Wallet className="w-4 h-4" />
+                      <span>Authenticate with Solana</span>
+                    </button>
+                  )}
+                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 1 })}
+                    className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 font-bold text-xs uppercase transition-all cursor-pointer border border-zinc-800">
+                    Back
                   </button>
                 </div>
-              ) : (
-                <button onClick={() => setReownModalOpen(true)}
-                  className="w-full py-4 bg-amber-400 hover:bg-amber-300 text-black font-black rounded-xl text-xs uppercase flex items-center justify-center gap-2.5 cursor-pointer">
-                  <Wallet className="w-4 h-4" />
-                  <span>Authenticate with Solana</span>
-                </button>
-              )}
+              </div>
 
             </div>
           </motion.div>

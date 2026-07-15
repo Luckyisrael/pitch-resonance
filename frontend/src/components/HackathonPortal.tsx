@@ -37,35 +37,26 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
             className="fixed right-0 top-0 bottom-0 w-full max-w-2xl bg-[#0C0C0E] border-l border-zinc-800 z-50 flex flex-col shadow-2xl overflow-hidden text-zinc-300"
           >
             {/* Header */}
-            <div className="p-6 border-b border-zinc-850 flex items-center justify-between bg-gradient-to-r from-amber-950/10 via-zinc-900/50 to-zinc-950">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                  <Trophy className="w-5 h-5 text-amber-400" />
+            <div className="p-6 border-b border-zinc-800">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <span className="text-[9px] font-mono tracking-[0.2em] font-black text-amber-400 uppercase block">Hackathon Submission</span>
+                  <h2 className="text-sm font-black text-[#F5F5F5] uppercase tracking-tight">Superteam Earn × TxODDS</h2>
+                  <div className="w-8 h-[2px] bg-amber-400 mt-1" />
                 </div>
-                <div>
-                  <h2 className="text-sm font-mono font-black tracking-widest text-[#F5F5F5] uppercase">
-                    Superteam Earn / TxODDS Track Portal
-                  </h2>
-                  <p className="text-[10px] font-mono text-amber-400 font-bold uppercase mt-0.5">
-                    Consumer & Fan Experiences
-                  </p>
-                </div>
+                <button onClick={onClose} className="p-1.5 bg-zinc-900 border border-zinc-800 hover:text-white transition-all cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
-              <button
-                onClick={onClose}
-                className="p-1.5 rounded-lg bg-zinc-900 border border-zinc-800 hover:text-white transition-all cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex border-b border-zinc-850 bg-zinc-950 font-mono text-[10px] uppercase font-bold">
+            <div className="flex border-b border-zinc-800 bg-zinc-950 font-mono text-[10px] uppercase font-bold">
               {[
-                { id: 'pitch', label: '🏆 Pitch Deck', icon: Star },
-                { id: 'docs', label: '💻 Tech Docs', icon: Code },
-                { id: 'feedback', label: '💬 TxLINE Feedback', icon: MessageSquare },
-                { id: 'monetization', label: '💵 Business Model', icon: DollarSign }
+                { id: 'pitch', label: 'Pitch Deck', icon: Star },
+                { id: 'docs', label: 'Tech Docs', icon: Code },
+                { id: 'feedback', label: 'Feedback', icon: MessageSquare },
+                { id: 'monetization', label: 'Business Model', icon: DollarSign }
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -73,15 +64,14 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 py-3 px-2 border-b-2 flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
+                    className={`flex-1 py-3 px-2 flex items-center justify-center gap-1.5 cursor-pointer transition-all ${
                       isActive 
-                        ? 'border-amber-400 text-amber-400 bg-zinc-900/40 font-black' 
-                        : 'border-transparent text-zinc-500 hover:text-zinc-300'
+                        ? 'bg-[#141415] text-amber-400 font-black' 
+                        : 'text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{tab.label.split(' ')[1]}</span>
-                    <span className="sm:hidden">{tab.label.split(' ')[1]}</span>
+                    <span>{tab.label.split(' ')[1] || tab.label}</span>
                   </button>
                 );
               })}
@@ -92,7 +82,7 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
               
               {activeTab === 'pitch' && (
                 <div className="space-y-5">
-                  <div className="p-4 bg-amber-450/5 border border-amber-500/10 rounded-xl space-y-2">
+                  <div className="p-4 bg-zinc-900/30 border border-zinc-800 space-y-2">
                     <h3 className="font-mono font-bold text-amber-400 uppercase text-[12px] flex items-center gap-1.5">
                       <Star className="w-4 h-4 text-amber-400" /> THE GRAND PITCH: "3D STADIUM VOLUMETRICS"
                     </h3>
@@ -101,15 +91,15 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-zinc-900/40 border border-zinc-850 rounded-xl space-y-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-zinc-800">
+                    <div className="p-4 bg-[#0C0C0D] space-y-1.5">
                       <span className="font-mono text-zinc-500 font-bold block uppercase text-[9px]">The Mainstream Fan Gap</span>
                       <p className="text-zinc-400 font-sans leading-relaxed">
                         Mainstream fans hate reading dry statistics. They want to <i>feel</i> the game. Our WebGL canvas deforms physical spatial geometry dynamically in response to on-chain tipping waves, creating beautiful, interactive topographic "pressure waves" that visually mirror game momentum.
                       </p>
                     </div>
 
-                    <div className="p-4 bg-zinc-900/40 border border-zinc-850 rounded-xl space-y-1.5">
+                    <div className="p-4 bg-[#0C0C0D] space-y-1.5">
                       <span className="font-mono text-zinc-500 font-bold block uppercase text-[9px]">Solana Seating Alliances</span>
                       <p className="text-zinc-400 font-sans leading-relaxed">
                         We group users into the **Albiceleste 🇦🇷** or **Pharaohs 🇪🇬** Zones. Fans trigger synthetic brass trumpets and drums to create physical ripple disturbances on the WebGL turf, making second-screen viewing a collaborative, multiplayer experience.
@@ -119,24 +109,24 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
 
                   <div className="space-y-2.5">
                     <h4 className="font-mono font-black text-[#F5F5F5] uppercase tracking-wider text-[10px]">
-                      Why This Wins 1st Place (Judging Criteria Alignment)
+                      Judging Criteria Alignment
                     </h4>
-                    <div className="space-y-2 font-mono text-[10px]">
-                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3 rounded-lg border border-zinc-900">
-                        <span className="text-emerald-400 font-black">✓</span>
-                        <p className="text-zinc-400">
+                    <div className="space-y-px bg-zinc-800">
+                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3">
+                        <span className="text-emerald-400 font-black text-[10px]">✓</span>
+                        <p className="text-zinc-400 text-[10px]">
                           <strong className="text-white">Fan Accessibility & UX:</strong> Designed from the ground up for a mobile-first generation. High-fidelity colors, low-latency audio synthesis, and interactive widgets keep engagement high.
                         </p>
                       </div>
-                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3 rounded-lg border border-zinc-900">
-                        <span className="text-emerald-400 font-black">✓</span>
-                        <p className="text-zinc-400">
+                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3">
+                        <span className="text-emerald-400 font-black text-[10px]">✓</span>
+                        <p className="text-zinc-400 text-[10px]">
                           <strong className="text-white">Real-Time Responsiveness:</strong> Smooth, seamless 3D rendering updates dynamically with TxLINE events (minutes, goals, team momentum swaps) without lagging or manual refreshing.
                         </p>
                       </div>
-                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3 rounded-lg border border-zinc-900">
-                        <span className="text-emerald-400 font-black">✓</span>
-                        <p className="text-zinc-400">
+                      <div className="flex gap-2 items-start bg-[#0C0C0D] p-3">
+                        <span className="text-emerald-400 font-black text-[10px]">✓</span>
+                        <p className="text-zinc-400 text-[10px]">
                           <strong className="text-white">Originality:</strong> Merges parimutuel hedging (rewarding early risks with a decay curve) with a gamified 3D tactical pitch deforming to create a new fan entertainment paradigm.
                         </p>
                       </div>
@@ -157,7 +147,7 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                   </div>
 
                   {/* Flow chart layout */}
-                  <div className="bg-[#0C0C0D] p-4 rounded-xl border border-zinc-900 font-mono text-[9px] space-y-3">
+                  <div className="bg-[#0C0C0D] p-4 border border-zinc-900 font-mono text-[9px] space-y-3">
                     <div className="flex justify-between items-center text-center">
                       <div className="p-2 border border-sky-500/20 bg-sky-950/10 text-sky-400 rounded w-1/4 font-bold">
                         TxLINE Oracle Feed
@@ -228,7 +218,7 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                   </div>
 
                   <div className="space-y-4">
-                    <div className="p-4 bg-emerald-950/10 border border-emerald-900/20 rounded-xl space-y-1">
+                    <div className="p-4 bg-emerald-950/10 border border-emerald-900/20 space-y-1">
                       <h4 className="font-mono font-black text-emerald-400 text-[10px] uppercase flex items-center gap-1">
                         ➕ WHAT WE LOVED
                       </h4>
@@ -237,7 +227,7 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                       </p>
                     </div>
 
-                    <div className="p-4 bg-rose-950/10 border border-rose-900/20 rounded-xl space-y-1">
+                    <div className="p-4 bg-rose-950/10 border border-rose-900/20 space-y-1">
                       <h4 className="font-mono font-black text-rose-400 text-[10px] uppercase flex items-center gap-1">
                         ⚠️ INTEGRATION FRICTION / IMPROVEMENT AREAS
                       </h4>
@@ -260,15 +250,15 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[10px]">
-                    <div className="p-4 bg-[#0C0C0D] border border-zinc-900 rounded-xl space-y-1">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-zinc-800 font-mono text-[10px]">
+                    <div className="p-4 bg-[#0C0C0D] space-y-1">
                       <span className="text-amber-400 font-black">1. 3.5% Program Commission (Rake)</span>
                       <p className="text-zinc-500 font-sans leading-relaxed">
                         Each time a winning ticket claims their reward from the contract escrow, a locked 3.5% platform fee is programmatically redirected to the protocol Treasury vault.
                       </p>
                     </div>
 
-                    <div className="p-4 bg-[#0C0C0D] border border-zinc-900 rounded-xl space-y-1">
+                    <div className="p-4 bg-[#0C0C0D] space-y-1">
                       <span className="text-sky-400 font-black">2. Autonomous Agent licensing</span>
                       <p className="text-zinc-500 font-sans leading-relaxed">
                         Fans pay a small micro-subscription fee in SOL to deploy our autonomous bots (*GoalSnatcher-v2*), generating a passive SaaS stream for the protocol developers.
@@ -276,7 +266,7 @@ export default function HackathonPortal({ isOpen, onClose }: HackathonPortalProp
                     </div>
                   </div>
 
-                  <div className="p-4 bg-zinc-900/40 border border-zinc-850 rounded-xl">
+                  <div className="p-4 bg-zinc-900/40 border border-zinc-850">
                     <h4 className="font-mono font-black text-white text-[10px] uppercase mb-1 flex items-center gap-1">
                       <Zap className="w-4 h-4 text-amber-400" /> THE GAME THEORY SUSTAINABILITY ADVANTAGE
                     </h4>
