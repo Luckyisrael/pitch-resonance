@@ -7,14 +7,14 @@ import http from 'http'
 import { Server as SocketIOServer } from 'socket.io'
 import { TxoddsClient } from './txodds/client'
 import type { PitchGridData } from './txodds/types'
-import { getAllMatches, getMatchScores, upsertTelemetryFrames, getTelemetryFrameCount, getFrames, insertTip, getMatchTotalTips, getUserMatchTips, markTipsClaimed, setMatchSettled, getMatchSettled, getBoardStats } from './db/client'
+import { getAllMatches, getMatchScores, insertTip, getMatchTotalTips, getUserMatchTips, markTipsClaimed, setMatchSettled, getMatchSettled, getBoardStats } from './db/client'
 import authRouter, { authenticateToken } from './auth/index'
 import { EVENTS } from './socket/events'
 import { PitchGrid } from './txodds/parser'
 import { simulateMatch } from './txodds/simulator'
 import historicalRouter from './historical/index'
 import physicsRouter from './physics/index'
-import { computePhysicsFrame, computeFrameFromPixelBlob } from './physics/engine'
+import { computePhysicsFrame } from './physics/engine'
 import { ReplayEngine } from './replay/engine'
 import { getPoolKeypair, getPoolAddress, getConnection, ensurePoolBalance, lamportsToSol } from './solana/pool'
 import { Connection, SystemProgram, Transaction, LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js'
@@ -803,59 +803,11 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught:', err.message)
 })
 
-function preSeedTelemetryFrames() {
-  const fixtureIds = ['18175983', '18179759', '18209181']
-  for (const fid of fixtureIds) {
-    try {
-      const cnt = getTelemetryFrameCount(fid)
-      if (cnt > 0) continue
-
-      const rows = getFrames(fid, { stride: 10 })
-      if (rows.length === 0) continue
-
-      const frames = rows.map(r => {
-        const p = computeFrameFromPixelBlob(Buffer.from(new Float32Array(r.pixelData).buffer), {
-          possession: r.possession, ballX: r.ballX, ballY: r.ballY,
-          homeScore: r.homeScore, awayScore: r.awayScore, phase: r.phase,
-          seq: r.seq, clockSec: r.clockSec, action: r.action, team: r.team,
-        })
-        return {
-          seq: p.seq, clockSec: p.clockSec, phase: p.phase,
-          homeScore: p.homeScore, awayScore: p.awayScore,
-          ballX: p.ballX, ballY: p.ballY,
-          territoryFactor: p.territoryFactor,
-          quadrants: p.quadrants,
-          turfAmplitude: p.turfAmplitude,
-          waveAngle: p.waveAngle, waveFrequency: p.waveFrequency,
-          rippleAge: p.rippleAge, possession: p.possession,
-          action: p.action, team: p.team,
-          shotPower: p.shotPower, cornerIndicator: p.cornerIndicator,
-          foulPulse: p.foulPulse, cardFlash: p.cardFlash,
-          attackIntensity: p.attackIntensity, momentumVector: p.momentumVector,
-          ballVelX: p.ballVelX, ballVelY: p.ballVelY, ballSpeed: p.ballSpeed,
-          shotsHome: p.shotsHome, shotsAway: p.shotsAway,
-          cornersHome: p.cornersHome, cornersAway: p.cornersAway,
-          foulsHome: p.foulsHome, foulsAway: p.foulsAway,
-          homeYellowCards: p.homeYellowCards, homeRedCards: p.homeRedCards,
-          awayYellowCards: p.awayYellowCards, awayRedCards: p.awayRedCards,
-        }
-      })
-      upsertTelemetryFrames(fid, frames)
-      console.log(`  Seeded ${fid} → ${frames.length} telemetry frames`)
-    } catch (err) {
-      console.log(`  Skip seed ${fid}: ${err}`)
-    }
-  }
-}
-
 async function start() {
   // Initialize pool wallet
   const poolKp = getPoolKeypair()
   console.log(`Pool wallet: ${poolKp.publicKey.toBase58()}`)
   await ensurePoolBalance()
-
-  // Pre-seed telemetry frames from historical data for fast physics API
-  preSeedTelemetryFrames()
 
   server.listen(PORT, () => {
     console.log(`Backend running on port ${PORT}`)
