@@ -141,11 +141,34 @@ export function getMatchScores(matchIds: string[]): Record<string, { homeScore: 
   if (matchIds.length === 0) return {}
   const d = getDb()
   const placeholders = matchIds.map(() => '?').join(',')
-  const rows = d.prepare(`SELECT fixture_id, home_score, away_score, total_events, match_date FROM fixture_raw WHERE fixture_id IN (${placeholders})`).all(...matchIds) as { fixture_id: string; home_score: number; away_score: number; total_events: number; match_date: string | null }[]
+
+  // Try fixture_raw first, fall back to telemetry_frames for seed data
+  const raw = d.prepare(`SELECT fixture_id, home_score, away_score, total_events, match_date FROM fixture_raw WHERE fixture_id IN (${placeholders})`).all(...matchIds) as { fixture_id: string; home_score: number; away_score: number; total_events: number; match_date: string | null }[]
   const result: Record<string, { homeScore: number; awayScore: number; totalEvents: number; matchDate: string | null }> = {}
-  for (const row of rows) {
+  const found = new Set<string>()
+  for (const row of raw) {
     result[row.fixture_id] = { homeScore: row.home_score, awayScore: row.away_score, totalEvents: row.total_events, matchDate: row.match_date }
+    found.add(row.fixture_id)
   }
+
+  // Fill missing from telemetry_frames (seed data)
+  const missing = matchIds.filter(id => !found.has(id))
+  if (missing.length > 0) {
+    const mPlaceholders = missing.map(() => '?').join(',')
+    const tf = d.prepare(`
+      SELECT match_id,
+             MAX(home_score) as home_score,
+             MAX(away_score) as away_score,
+             COUNT(*) as total_events
+      FROM telemetry_frames
+      WHERE match_id IN (${mPlaceholders})
+      GROUP BY match_id
+    `).all(...missing) as { match_id: string; home_score: number; away_score: number; total_events: number }[]
+    for (const row of tf) {
+      result[row.match_id] = { homeScore: row.home_score, awayScore: row.away_score, totalEvents: row.total_events, matchDate: null }
+    }
+  }
+
   return result
 }
 
@@ -229,7 +252,23 @@ export function getFixtureRaw(fixtureId: string): {
 
 export function getAllFixtureIds(): { fixtureId: string; homeTeam: string; awayTeam: string; totalEvents: number; loadedAt: string }[] {
   const d = getDb()
-  return d.prepare(`SELECT fixture_id as fixtureId, home_team as homeTeam, away_team as awayTeam, total_events as totalEvents, loaded_at as loadedAt FROM fixture_raw ORDER BY loaded_at DESC`).all() as { fixtureId: string; homeTeam: string; awayTeam: string; totalEvents: number; loadedAt: string }[]
+  const raw = d.prepare(`SELECT fixture_id as fixtureId, home_team as homeTeam, away_team as awayTeam, total_events as totalEvents, loaded_at as loadedAt FROM fixture_raw ORDER BY loaded_at DESC`).all() as { fixtureId: string; homeTeam: string; awayTeam: string; totalEvents: number; loadedAt: string }[]
+  if (raw.length > 0) return raw
+
+  // Fall back to matches + telemetry_frames for seed data
+  const seeded = d.prepare(`
+    SELECT m.match_id as fixtureId,
+           m.home_team as homeTeam,
+           m.away_team as awayTeam,
+           COUNT(t.id) as totalEvents,
+           MAX(m.start_time) as loadedAt
+    FROM matches m
+    LEFT JOIN telemetry_frames t ON t.match_id = m.match_id
+    WHERE t.id IS NOT NULL
+    GROUP BY m.match_id
+    ORDER BY MAX(m.start_time) DESC
+  `).all() as { fixtureId: string; homeTeam: string; awayTeam: string; totalEvents: number; loadedAt: string }[]
+  return seeded
 }
 
 // --- Fixture frames storage ---
@@ -307,7 +346,9 @@ export function getFrames(fixtureId: string, opts?: { start?: number; end?: numb
 
 export function getFrameCount(fixtureId: string): number {
   const d = getDb()
-  const row = d.prepare(`SELECT COUNT(*) as cnt FROM fixture_frames WHERE fixture_id = ?`).get(fixtureId) as { cnt: number }
+  let row = d.prepare(`SELECT COUNT(*) as cnt FROM fixture_frames WHERE fixture_id = ?`).get(fixtureId) as { cnt: number }
+  if (row.cnt > 0) return row.cnt
+  row = d.prepare(`SELECT COUNT(*) as cnt FROM telemetry_frames WHERE match_id = ?`).get(fixtureId) as { cnt: number }
   return row.cnt
 }
 
