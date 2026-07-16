@@ -8,7 +8,7 @@ import { Server as SocketIOServer } from 'socket.io'
 import { TxoddsClient } from './txodds/client'
 import type { PitchGridData } from './txodds/types'
 import { getAllMatches, getMatchScores, insertTip, getMatchTotalTips, getUserMatchTips, markTipsClaimed, setMatchSettled, getMatchSettled, getBoardStats } from './db/client'
-import authRouter, { authenticateToken } from './auth/index'
+import authRouter, { optionalAuth, requireAuth } from './auth/index'
 import { EVENTS } from './socket/events'
 import { PitchGrid } from './txodds/parser'
 import { simulateMatch } from './txodds/simulator'
@@ -34,6 +34,7 @@ const app = express()
 const corsOrigins = FRONTEND_URL === '*' ? true : FRONTEND_URL.split(',').map(s => s.trim())
 app.use(cors({ origin: corsOrigins, credentials: true }))
 app.use(express.json())
+app.use(optionalAuth)
 
 const server = http.createServer(app)
 const io = new SocketIOServer(server, {
@@ -71,7 +72,7 @@ function triggerShockwave(matchId: string, data: ShockwaveQueue[0]) {
 }
 
 // POST /api/hype/tip — receive a real Solana tx signature, verify on-chain, update pools
-app.post('/api/hype/tip', async (req, res) => {
+app.post('/api/hype/tip', requireAuth, async (req, res) => {
   try {
     const { matchId, team, signature } = req.body as { matchId?: string; team?: string; signature?: string }
     if (!matchId || !team || (team !== 'home' && team !== 'away')) {
@@ -166,7 +167,7 @@ app.post('/api/hype/tip', async (req, res) => {
 })
 
 // POST /api/hype/claim — claim winnings for a settled match
-app.post('/api/hype/claim', authenticateToken, async (req, res) => {
+app.post('/api/hype/claim', requireAuth, async (req, res) => {
   try {
     const { matchId } = req.body as { matchId?: string }
     if (!matchId) {
@@ -286,7 +287,7 @@ app.post('/api/hype/settle', (req, res) => {
 })
 
 // GET /api/hype/pools/:matchId — pool + user tip stats
-app.get('/api/hype/pools/:matchId', authenticateToken, (req, res) => {
+app.get('/api/hype/pools/:matchId', (req, res) => {
   const { matchId } = req.params
   const userWallet = (req as any).user?.wallet
   const totalPools = getMatchTotalTips(matchId)
@@ -313,7 +314,7 @@ app.get('/api/hype/pool-address', (_req, res) => {
 })
 
 // POST /api/hype/faucet — airdrop 2 devnet SOL to the caller's wallet
-app.post('/api/hype/faucet', authenticateToken, async (req, res) => {
+app.post('/api/hype/faucet', requireAuth, async (req, res) => {
   try {
     const userWallet = (req as any).user?.wallet
     if (!userWallet) {

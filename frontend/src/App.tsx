@@ -33,6 +33,10 @@ export default function App() {
         }
       });
     }
+
+    const handler = () => setReownModalOpen(true);
+    window.addEventListener('open-wallet-modal', handler);
+    return () => window.removeEventListener('open-wallet-modal', handler);
   }, []);
 
   const handleAuthSuccess = (address: string, token: string) => {
@@ -305,8 +309,12 @@ export default function App() {
                       <span>Authenticate with Solana</span>
                     </button>
                   )}
-                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 1 })}
+                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 3 })}
                     className="w-full py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-500 font-bold text-xs uppercase transition-all cursor-pointer border border-zinc-800">
+                    Skip — Browse as Guest
+                  </button>
+                  <button onClick={() => dispatch({ type: 'SET_ONBOARDING', step: 1 })}
+                    className="w-full py-2 text-[9px] font-mono text-zinc-600 hover:text-zinc-400 uppercase transition-all cursor-pointer">
                     Back
                   </button>
                 </div>
@@ -352,7 +360,7 @@ export default function App() {
                     </div>
                   ) : (
                     <button onClick={() => setReownModalOpen(true)}
-                      className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-black font-mono font-black text-[9px] uppercase rounded-lg cursor-pointer">
+                      className="px-3 py-1.5 border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-mono font-black text-[9px] uppercase cursor-pointer transition-all">
                       Connect Wallet
                     </button>
                   )}

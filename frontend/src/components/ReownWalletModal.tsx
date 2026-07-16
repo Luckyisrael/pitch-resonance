@@ -70,7 +70,9 @@ export default function ReownWalletModal({
     }
   };
 
-  const getProvider = (): any => (window as any).solana;
+  // Detect available wallets
+  const phantomAvailable = !!(window as any).solana?.isPhantom;
+  const solflareAvailable = !!((window as any).solflare || (window as any).solana?.isSolflare);
 
   const bytesToHex = (bytes: Uint8Array) =>
     Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -83,9 +85,9 @@ export default function ReownWalletModal({
   };
 
   const handleConnectPhantom = async () => {
-    const provider = getProvider();
-    if (!provider || !provider.isPhantom) {
-      setErrorMsg("Phantom wallet extension not detected in this browser.");
+    const provider = (window as any).solana;
+    if (!provider?.isPhantom) {
+      setErrorMsg("Phantom not detected. Install from https://phantom.app");
       return;
     }
     setIsConnecting(true);
@@ -101,9 +103,9 @@ export default function ReownWalletModal({
   };
 
   const handleConnectSolflare = async () => {
-    const provider = (window as any).solflare || getProvider();
-    if (!provider || provider.isPhantom) {
-      setErrorMsg("Solflare wallet extension not detected in this browser.");
+    const provider = (window as any).solflare || (window as any).solana;
+    if (!provider || provider.isPhantom || !(provider.isSolflare || (window as any).solflare)) {
+      setErrorMsg("Solflare not detected. Install from https://solflare.com");
       return;
     }
     setIsConnecting(true);
@@ -166,7 +168,9 @@ export default function ReownWalletModal({
                   <span className="text-[9px] font-mono text-zinc-500 block">Browser Extension</span>
                 </div>
               </div>
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider font-bold">Solana</span>
+              <span className={`text-[8px] font-mono uppercase tracking-wider font-bold ${phantomAvailable ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                {phantomAvailable ? 'Detected' : 'Not Found'}
+              </span>
             </button>
 
             <button onClick={handleConnectSolflare} disabled={isConnecting}
@@ -181,7 +185,9 @@ export default function ReownWalletModal({
                   <span className="text-[9px] font-mono text-zinc-500 block">Mobile or Extension</span>
                 </div>
               </div>
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-wider font-bold">Multi-Platform</span>
+              <span className={`text-[8px] font-mono uppercase tracking-wider font-bold ${solflareAvailable ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                {solflareAvailable ? 'Detected' : 'Not Found'}
+              </span>
             </button>
           </div>
 

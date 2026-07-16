@@ -196,68 +196,90 @@ export default function LiveTab() {
               <span className="text-[9px] font-mono tracking-[0.2em] font-black text-zinc-400 uppercase">Wallet Profile</span>
               <span className="text-[9px] font-mono text-zinc-500 font-bold">SOLANA DEVNET</span>
             </div>
-            <div className="grid grid-cols-2 gap-px bg-zinc-800">
-              <div className="bg-[#0C0C0D] p-4 text-center">
-                <span className="text-[8px] font-mono text-zinc-500 font-bold block uppercase">Balance</span>
-                <span className="text-sm font-mono font-black text-white mt-1.5 block">{state.solBalance.toFixed(2)} SOL</span>
+            {state.walletConnected ? (
+              <div className="grid grid-cols-2 gap-px bg-zinc-800">
+                <div className="bg-[#0C0C0D] p-4 text-center">
+                  <span className="text-[8px] font-mono text-zinc-500 font-bold block uppercase">Balance</span>
+                  <span className="text-sm font-mono font-black text-white mt-1.5 block">{state.solBalance.toFixed(2)} SOL</span>
+                </div>
+                <div className="bg-[#0C0C0D] p-4 text-center">
+                  <span className="text-[8px] font-mono text-zinc-500 font-bold block uppercase">Total Cheered</span>
+                  <span className="text-sm font-mono font-black text-amber-400 mt-1.5 block">
+                    {(state.userStakeHome + state.userStakeAway).toFixed(2)} SOL
+                  </span>
+                </div>
               </div>
-              <div className="bg-[#0C0C0D] p-4 text-center">
-                <span className="text-[8px] font-mono text-zinc-500 font-bold block uppercase">Total Cheered</span>
-                <span className="text-sm font-mono font-black text-amber-400 mt-1.5 block">
-                  {(state.userStakeHome + state.userStakeAway).toFixed(2)} SOL
-                </span>
+            ) : (
+              <div className="bg-[#0C0C0D] p-4 text-center space-y-2">
+                <p className="text-[10px] font-mono text-zinc-500">Connect wallet to view balance and place stakes</p>
+                <button onClick={() => window.dispatchEvent(new CustomEvent('open-wallet-modal'))}
+                  className="px-4 py-2 border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-black text-[9px] uppercase cursor-pointer transition-all">
+                  Connect Wallet
+                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
         <div className="bg-[#141415] border border-zinc-800">
           <div className="p-5 space-y-4">
             <span className="text-[9px] font-mono tracking-[0.2em] font-black text-zinc-400 uppercase">Boost Hype Pool</span>
-            <AnimatePresence>
-              {state.isConfirmingTx && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="p-4 bg-zinc-950/70 border border-amber-500/30 flex flex-col items-center space-y-3">
-                  <RefreshCw className="w-7 h-7 text-amber-400 animate-spin" />
-                  <p className="text-xs font-mono font-black text-white uppercase">Confirming Transaction</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            {!state.isConfirmingTx && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-px bg-zinc-800 text-center font-mono text-[10px] font-bold text-zinc-400">
-                  <div className="bg-[#0C0C0D] p-3"><span>Your {state.homeTeam.slice(0, 3) || 'Home'} Stake</span>
-                    <span className="block text-xs font-black text-sky-400 mt-0.5">{state.userStakeHome.toFixed(2)} SOL</span>
-                  </div>
-                  <div className="bg-[#0C0C0D] p-3"><span>Your {state.awayTeam.slice(0, 3) || 'Away'} Stake</span>
-                    <span className="block text-xs font-black text-rose-400 mt-0.5">{state.userStakeAway.toFixed(2)} SOL</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-px bg-zinc-800">
-                  <div className="space-y-2.5 text-center bg-[#141415] p-3">
-                    <span className="text-[9px] font-mono font-black text-sky-400 uppercase tracking-widest">
-                      {state.homeTeam.slice(0, 3) || 'HOME'}
-                    </span>
-                    {([0.1, 0.5, 1.0] as number[]).map(amt => (
-                      <button key={amt} onClick={() => handleSendTip('home', amt)}
-                        className="w-full py-2 bg-sky-950/40 hover:bg-sky-900/60 text-sky-400 border border-sky-900/50 text-xs font-mono font-black cursor-pointer active:scale-[0.96]">
-                        +{amt} SOL
-                      </button>
-                    ))}
-                  </div>
-                  <div className="space-y-2.5 text-center bg-[#141415] p-3">
-                    <span className="text-[9px] font-mono font-black text-rose-400 uppercase tracking-widest">
-                      {state.awayTeam.slice(0, 3) || 'AWAY'}
-                    </span>
-                    {([0.1, 0.5, 1.0] as number[]).map(amt => (
-                      <button key={amt} onClick={() => handleSendTip('away', amt)}
-                        className="w-full py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-900/50 text-xs font-mono font-black cursor-pointer active:scale-[0.96]">
-                        +{amt} SOL
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {!state.walletConnected ? (
+              <div className="bg-[#0C0C0D] p-4 text-center space-y-2 border border-zinc-800">
+                <p className="text-[10px] font-mono text-zinc-500">Connect wallet to place stakes and earn rewards</p>
+                <button onClick={() => window.dispatchEvent(new CustomEvent('open-wallet-modal'))}
+                  className="px-4 py-2 border border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-black text-[9px] uppercase cursor-pointer transition-all">
+                  Connect Wallet
+                </button>
               </div>
+            ) : (
+              <>
+                <AnimatePresence>
+                  {state.isConfirmingTx && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="p-4 bg-zinc-950/70 border border-amber-500/30 flex flex-col items-center space-y-3">
+                      <RefreshCw className="w-7 h-7 text-amber-400 animate-spin" />
+                      <p className="text-xs font-mono font-black text-white uppercase">Confirming Transaction</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {!state.isConfirmingTx && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-px bg-zinc-800 text-center font-mono text-[10px] font-bold text-zinc-400">
+                      <div className="bg-[#0C0C0D] p-3"><span>Your {state.homeTeam.slice(0, 3) || 'Home'} Stake</span>
+                        <span className="block text-xs font-black text-sky-400 mt-0.5">{state.userStakeHome.toFixed(2)} SOL</span>
+                      </div>
+                      <div className="bg-[#0C0C0D] p-3"><span>Your {state.awayTeam.slice(0, 3) || 'Away'} Stake</span>
+                        <span className="block text-xs font-black text-rose-400 mt-0.5">{state.userStakeAway.toFixed(2)} SOL</span>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-px bg-zinc-800">
+                      <div className="space-y-2.5 text-center bg-[#141415] p-3">
+                        <span className="text-[9px] font-mono font-black text-sky-400 uppercase tracking-widest">
+                          {state.homeTeam.slice(0, 3) || 'HOME'}
+                        </span>
+                        {([0.1, 0.5, 1.0] as number[]).map(amt => (
+                          <button key={amt} onClick={() => handleSendTip('home', amt)}
+                            className="w-full py-2 bg-sky-950/40 hover:bg-sky-900/60 text-sky-400 border border-sky-900/50 text-xs font-mono font-black cursor-pointer active:scale-[0.96]">
+                            +{amt} SOL
+                          </button>
+                        ))}
+                      </div>
+                      <div className="space-y-2.5 text-center bg-[#141415] p-3">
+                        <span className="text-[9px] font-mono font-black text-rose-400 uppercase tracking-widest">
+                          {state.awayTeam.slice(0, 3) || 'AWAY'}
+                        </span>
+                        {([0.1, 0.5, 1.0] as number[]).map(amt => (
+                          <button key={amt} onClick={() => handleSendTip('away', amt)}
+                            className="w-full py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-900/50 text-xs font-mono font-black cursor-pointer active:scale-[0.96]">
+                            +{amt} SOL
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
