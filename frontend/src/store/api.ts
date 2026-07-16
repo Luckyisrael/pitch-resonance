@@ -64,11 +64,14 @@ export async function sendTipSignature(
   baseUrl: string,
   matchId: string,
   team: 'home' | 'away',
-  signature: string
+  signature: string,
+  token?: string
 ): Promise<{ success: boolean; amount: number; lamports: number; explorerUrl: string | null }> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
   const res = await fetch(`${baseUrl}/api/hype/tip`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ matchId, team, signature }),
   });
   if (!res.ok) {
@@ -100,7 +103,7 @@ export async function claimWinnings(
 export async function getPoolStats(
   baseUrl: string,
   matchId: string,
-  token: string
+  token?: string
 ): Promise<{
   matchId: string;
   homePool: number;
@@ -112,9 +115,9 @@ export async function getPoolStats(
   winner: number | null;
   settled: boolean;
 }> {
-  const res = await fetch(`${baseUrl}/api/hype/pools/${matchId}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`${baseUrl}/api/hype/pools/${matchId}`, { headers });
   if (!res.ok) throw new Error('Failed to fetch pool stats');
   return res.json();
 }

@@ -290,7 +290,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const { signature } = await provider.signAndSendTransaction(tx);
 
-      await api.sendTipSignature(state.backendUrl, matchId, team, signature);
+      await api.sendTipSignature(state.backendUrl, matchId, team, signature, state.authToken);
 
       const matchInfo = state.fixtures.find(f => f.matchId === matchId);
       dispatch({ type: 'ADD_TIP', team, amount: Math.round(amount * 1e9) / 1e9, sig: signature });
